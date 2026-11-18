@@ -10,3 +10,4 @@ Tujuan:
 
 Status: Sedang belajar
 Pelajaran: Belajar mengedit file di GitHub
+Belajar GitHub Desktop di komputer Windows.
