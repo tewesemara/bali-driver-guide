@@ -1,0 +1,129 @@
+/**
+ * SCRIPT OTOMATIS PEMBUAT GOOGLE FORM + PENGHUBUNG KE GOOGLE SHEETS
+ * Database Sopir & Tour Guide Bali (BaliDriver)
+ * 
+ * Cara Pakai:
+ * 1. Buka file Google Sheets 'Sistem_Terpadu_BaliDriver_Form_AppSheet' di Google Drive Anda.
+ * 2. Klik menu atas: Ekstensi (Extensions) > Apps Script.
+ * 3. Hapus semua kode bawaan, tempel (paste) seluruh kode ini, lalu klik ikon Simpan (Ctrl+S).
+ * 4. Klik tombol 'Jalankan' (Run) pada fungsi buatGoogleFormBaliDriver.
+ * 5. Izinkan akses (Review Permissions > Advanced > Go to ... > Allow).
+ * 6. Link Google Form yang siap sebar ke WA sopir akan langsung muncul di Log eksekusi & popup layar!
+ */
+
+function buatGoogleFormBaliDriver() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. Buat Google Form Baru
+  var form = FormApp.create('Pendaftaran Member Sopir & Tour Guide Bali (Gratis +50 Poin)');
+  form.setDescription(
+    'Selamat datang Bli/Mbok Driver & Tour Guide Bali!\n\n' +
+    'Daftarkan data Anda dalam 30 detik untuk mendapatkan:\n' +
+    '✅ Bonus +50 Poin Awal (Bisa ditukar Voucher Bensin / Pulsa)\n' +
+    '✅ Kode ID Resmi untuk klaim komisi setipan di mitra oleh-oleh, watersport & wisata\n' +
+    '✅ Prioritas lemparan order (sub-order) sesuai area standby & bahasa\n\n' +
+    'Data Anda aman dan hanya digunakan untuk koordinasi order & pencairan komisi.'
+  );
+  form.setConfirmationMessage(
+    'Suksma Bli/Mbok! Data Anda sudah terdaftar di sistem kami.\n\n' +
+    'Anda langsung mendapatkan +50 Poin Awal. Admin kami akan segera menghubungi via WhatsApp untuk mengirimkan Kode ID Member resmi Anda.'
+  );
+  form.setCollectEmail(false);
+  form.setLimitOneResponsePerUser(false);
+
+  // 2. Pertanyaan 1: Nama Lengkap
+  form.addTextItem()
+    .setTitle('Nama Lengkap')
+    .setHelpText('Masukkan nama lengkap atau nama panggilan yang biasa dipakai di lapangan (Contoh: I Made Wijaya)')
+    .setRequired(true);
+
+  // 3. Pertanyaan 2: Nomor WhatsApp
+  var waValidation = FormApp.createTextValidation()
+    .setHelpText('Wajib awali dengan 62 tanpa spasi atau tanda + (Contoh: 6281234567890)')
+    .requireTextMatchesPattern('^62[0-9]{8,13}$')
+    .build();
+
+  form.addTextItem()
+    .setTitle('Nomor WhatsApp (Awali 62)')
+    .setHelpText('Contoh: 6281234567890 (Jangan pakai 08 di depan)')
+    .setValidation(waValidation)
+    .setRequired(true);
+
+  // 4. Pertanyaan 3: Kategori Profesi
+  form.addMultipleChoiceItem()
+    .setTitle('Kategori Profesi')
+    .setChoiceValues(['Driver', 'Tour Guide', 'Driver & Guide'])
+    .setRequired(true);
+
+  // 5. Pertanyaan 4: Jenis Kendaraan
+  form.addTextItem()
+    .setTitle('Jenis Kendaraan')
+    .setHelpText('Contoh: Toyota Avanza, Innova Reborn, HiAce, Elf, atau isi "-" jika khusus Tour Guide tanpa mobil')
+    .setRequired(true);
+
+  // 6. Pertanyaan 5: Plat Nomor (DK)
+  form.addTextItem()
+    .setTitle('Plat Nomor (DK)')
+    .setHelpText('Contoh: DK 1234 AB (Isi "-" jika tidak membawa kendaraan)')
+    .setRequired(true);
+
+  // 7. Pertanyaan 6: Area Standby Utama
+  form.addListItem()
+    .setTitle('Area Standby Utama')
+    .setChoiceValues([
+      'Kuta / Bandara',
+      'Ubud',
+      'Canggu / Seminyak',
+      'Nusa Dua / Jimbaran',
+      'Sanur',
+      'Denpasar',
+      'Lovina / Bali Utara'
+    ])
+    .setRequired(true);
+
+  // 8. Pertanyaan 7: Bahasa yang Dikuasai
+  form.addCheckboxItem()
+    .setTitle('Bahasa yang Dikuasai')
+    .setChoiceValues(['Inggris', 'Mandarin', 'Jepang', 'Korea', 'Rusia', 'Perancis', 'Spanyol'])
+    .showOtherOption(true)
+    .setRequired(true);
+
+  // 9. Pertanyaan 8: Kode Referral Teman (Opsional)
+  form.addTextItem()
+    .setTitle('Kode Referral Teman (Opsional)')
+    .setHelpText('Jika diajak teman sopir/guide, masukkan Kode ID-nya (Contoh: DRV-001) agar teman Anda dapat +25 Poin')
+    .setRequired(false);
+
+  // 10. Hubungkan Form ke Google Sheets aktif
+  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
+  SpreadsheetApp.flush();
+
+  // Beri jeda sebentar agar tab baru terbentuk, lalu rapikan nama tab jika perlu
+  Utilities.sleep(2000);
+  var sheets = ss.getSheets();
+  var newFormSheet = sheets[0]; // Tab jawaban form biasanya muncul paling kiri
+  
+  // Hapus tab Form_Responses template lama jika kosong/tidak terpakai dan rename tab baru
+  var oldSheet = ss.getSheetByName('Form_Responses');
+  if (oldSheet && newFormSheet.getSheetId() !== oldSheet.getSheetId()) {
+    oldSheet.setName('Form_Responses_Contoh');
+  }
+  newFormSheet.setName('Form_Responses');
+
+  var publicUrl = form.getPublishedUrl();
+  var editUrl = form.getEditUrl();
+
+  Logger.log('====================================================');
+  Logger.log('BERHASIL! GOOGLE FORM SIAP DISEBAR KE SOPIR:');
+  Logger.log('Link Isi Form (Bagikan ke WA Sopir): ' + publicUrl);
+  Logger.log('Link Edit Form (Khusus Admin): ' + editUrl);
+  Logger.log('====================================================');
+
+  // Tampilkan popup langsung di Google Sheets
+  var ui = SpreadsheetApp.getUi();
+  ui.alert(
+    'Google Form Berhasil Dibuat & Terhubung!',
+    'Link Form untuk dibagikan ke WA Sopir:\n' + publicUrl + '\n\nLink Edit Form (Admin):\n' + editUrl,
+    ui.ButtonSet.OK
+  );
+}
