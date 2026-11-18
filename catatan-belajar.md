@@ -9,3 +9,4 @@ Tujuan:
 - Belajar mengembangkan database
 
 Status: Sedang belajar
+Pelajaran: Belajar mengedit file di GitHub
