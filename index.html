@@ -1,66 +1,682 @@
-const CONFIG={
-  SUPABASE_URL:"https://wssbbcygkikepyhzudvf.supabase.co",
-  SUPABASE_ANON_KEY:"sb_publishable_22gvj7q_JkIRTvCiUAUooQ_XSHdKUeq"
-};
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bali Driver &amp; Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #087e79;
+      --primary-dark: #06645f;
+      --background: #f3f6f8;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --border: #dbe3e8;
+      --danger: #c62828;
+      --success: #16834a;
+      --warning: #a16207;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+    .login-page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #e1f4f1, #f3f6f8);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      padding: 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 35px rgba(15, 23, 42, .08);
+    }
+    .login-card h1 { margin: 0 0 8px; color: var(--primary); }
+    .muted { color: var(--muted); }
+    .field { margin-bottom: 15px; }
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .field input, .field select, .field textarea, .toolbar input {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+    }
+    .field textarea { min-height: 82px; resize: vertical; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: .6; cursor: wait; }
+    .btn-secondary { background: #e8eef2; color: #263746; }
+    .btn-secondary:hover { background: #d9e2e8; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: #9f1d1d; }
+    .btn-small { min-height: 32px; padding: 7px 10px; font-size: 13px; }
+    .full-width { width: 100%; }
+    .message { min-height: 20px; margin: 12px 0 0; font-size: 14px; }
+    .message.error { color: var(--danger); }
+    .message.success { color: var(--success); }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--primary);
+      color: #fff;
+    }
+    .brand h1 { margin: 0; font-size: 21px; }
+    .brand p { margin: 4px 0 0; font-size: 13px; opacity: .9; }
+    .user-area { display: flex; align-items: center; gap: 12px; }
+    .user-area span { font-size: 13px; overflow-wrap: anywhere; }
+    .user-area .btn { background: #fff; color: var(--primary-dark); }
+    .layout { max-width: 1200px; margin: 0 auto; padding: 22px; }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .nav button {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .nav button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .card {
+      margin-bottom: 18px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+    }
+    .card h2 { margin: 0 0 8px; font-size: 20px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .stat {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fbfdfe;
+    }
+    .stat strong { display: block; margin-top: 8px; font-size: 28px; color: var(--primary); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 16px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .toolbar input { max-width: 360px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+    th { background: #f7fafb; white-space: nowrap; }
+    td select { max-width: 145px; padding: 7px; border: 1px solid var(--border); border-radius: 6px; }
+    .actions { display: flex; gap: 6px; }
+    .status-note { padding: 12px; border-radius: 8px; background: #fff8e6; color: #805b10; }
+    .footer { padding: 12px 0 24px; text-align: center; color: var(--muted); font-size: 12px; }
+    @media (max-width: 700px) {
+      .topbar { align-items: flex-start; flex-direction: column; padding: 16px; }
+      .user-area { width: 100%; justify-content: space-between; }
+      .layout { padding: 14px; }
+      .stats { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: auto; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .toolbar input { max-width: none; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HALAMAN LOGIN -->
+  <section id="loginArea" class="login-page">
+    <div class="login-card">
+      <h1>Bali Driver &amp; Guide</h1>
+      <p class="muted">Silakan masuk menggunakan akun admin atau ops.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+        </div>
+        <button id="loginButton" class="btn full-width" type="submit">Masuk</button>
+        <p id="loginMessage" class="message" role="status"></p>
+      </form>
+    </div>
+  </section>
 
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bali Driver & Guide</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--navy:#142b3b;--teal:#087e79;--bg:#f3f6f7;--line:#e2e8eb;--muted:#687780}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px system-ui,Arial;color:#1d303b}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--teal);color:white;font-weight:650}button.secondary{background:#e8eff0;color:#203943}button.danger{background:#a83d42}button.small{padding:7px 10px;font-size:12px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;background:white;color:#1d303b}label{display:block;font-size:12px;color:#52636c;font-weight:650;margin:10px 0 5px}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.side{background:var(--navy);color:white;padding:24px 16px}.brand{font-size:17px;font-weight:800;line-height:1.3;margin:0 8px 25px}.brand span{display:block;color:#83c8c0;font-size:11px;letter-spacing:1.5px;margin-top:5px}.nav button{display:block;width:100%;text-align:left;background:transparent;color:#d7e4e8;margin:4px 0;padding:12px}.nav button.active,.nav button:hover{background:#244556;color:white}.sidefoot{color:#a9c0c8;font-size:11px;margin:30px 8px}.main{padding:27px;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}.top h1{margin:0;font-size:25px}.muted{color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}.card,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:17px}.metric{font-size:27px;font-weight:800;margin-top:8px}.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:13px}.toolbar input{max-width:290px}.tablewrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:760px}th,td{text-align:left;padding:12px 13px;border-bottom:1px solid #edf1f2;white-space:nowrap}th{font-size:11px;text-transform:uppercase;color:#64747b;background:#f9fbfb}td{font-size:13px}.pill{display:inline-block;border-radius:30px;padding:4px 9px;background:#e8f5f2;color:#08766c;font-size:11px;font-weight:700}.off{background:#f2eeee;color:#8b5555}.actions,.right{display:flex;gap:7px;align-items:center}.hidden{display:none!important}.modalback{position:fixed;inset:0;background:#10232d88;display:grid;place-items:center;padding:16px;z-index:10}.modal{background:white;border-radius:15px;width:min(720px,100%);max-height:92vh;overflow:auto;padding:22px}.modalhead,.subhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.modalhead h2,.subhead h2{margin:0;font-size:18px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.notice{padding:11px;border-radius:9px;background:#fff6df;color:#75591c;font-size:12px;margin:12px 0}.login{max-width:420px;margin:8vh auto;background:white;padding:28px;border:1px solid var(--line);border-radius:16px}.empty{text-align:center;padding:35px;color:var(--muted)}.hint{font-size:12px;color:var(--muted)}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.day{background:white;border:1px solid var(--line);border-radius:8px;min-height:80px;padding:7px;font-size:12px}.day b{display:block;margin-bottom:4px}.event{background:#e4f4f1;color:#075f59;padding:3px 5px;border-radius:5px;margin:3px 0;font-size:10px;overflow:hidden}.dayhead{text-align:center;color:var(--muted);font-size:11px;padding:7px}.hiddenrole{display:none!important}
-@media(max-width:850px){.shell{grid-template-columns:1fr}.side{padding:12px}.brand{margin:3px 8px 10px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;width:auto;margin:0 2px}.sidefoot{display:none}.main{padding:17px}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.cards{gap:8px}.card{padding:12px}.metric{font-size:22px}.top h1{font-size:20px}.formgrid{grid-template-columns:1fr}}
-</style></head><body>
-<div id="login" class="login"><h1>Bali Driver & Guide</h1><p class="muted">Workspace operasional travel Bali</p><div class="notice">Akun dibuat oleh admin melalui Supabase Authentication. Hubungkan konfigurasi database sesuai README.</div><label>Email</label><input id="email" type="email" placeholder="nama@travel.com"><label>Password</label><input id="password" type="password"><div class="right" style="margin-top:16px"><button id="signIn">Masuk</button></div><p id="authmsg" class="hint"></p></div>
-<div id="app" class="shell hidden"><aside class="side"><div class="brand">BALI DRIVER & GUIDE<span>MANAGEMENT SYSTEM</span></div><nav class="nav">
-<button data-page="dashboard" class="active">▦ Dashboard</button><button data-page="drivers">♙ Driver</button><button data-page="guides">♧ Guide</button><button data-page="bookings">▣ Booking</button><button data-page="calendar">▦ Kalender</button><button data-page="commissions">Rp Komisi</button><button data-page="users" id="usersNav">♙ Pengguna</button><button data-page="reports">▤ Laporan</button></nav><div class="sidefoot">Workspace bersama · Bali, Indonesia</div></aside>
-<main class="main"><div class="top"><div><h1 id="pageTitle">Dashboard</h1><div class="muted" id="today"></div></div><div class="right"><span class="muted" id="who"></span><button class="secondary small" id="logout">Keluar</button></div></div>
-<section id="dashboard"><div class="cards"><div class="card"><div class="muted">Total Driver</div><div class="metric" id="mD">0</div></div><div class="card"><div class="muted">Total Guide</div><div class="metric" id="mG">0</div></div><div class="card"><div class="muted">Booking aktif</div><div class="metric" id="mB">0</div></div><div class="card"><div class="muted">Jadwal hari ini</div><div class="metric" id="mT">0</div></div></div><div class="panel"><div class="subhead"><h2>Jadwal terdekat</h2><button class="small" onclick="go('calendar')">Buka kalender</button></div><div id="upcoming"></div></div></section>
-<section id="dataPage" class="hidden"><div class="toolbar"><input id="search" placeholder="Cari data..."><button id="add">＋ Tambah</button><button class="secondary" id="csv">Export CSV</button></div><div class="tablewrap" id="table"></div></section>
-<section id="calendarPage" class="hidden"><div class="toolbar"><button class="secondary" id="prevMonth">‹</button><b id="monthLabel"></b><button class="secondary" id="nextMonth">›</button></div><div id="calendar" class="calendar"></div></section>
-<section id="commissionPage" class="hidden"><div class="cards"><div class="card"><div class="muted">Total komisi tercatat</div><div class="metric" id="cTotal">Rp0</div></div><div class="card"><div class="muted">Belum dibayar</div><div class="metric" id="cUnpaid">Rp0</div></div><div class="card"><div class="muted">Sudah dibayar</div><div class="metric" id="cPaid">Rp0</div></div></div><div class="tablewrap" id="commissionTable"></div></section>
-<section id="reportsPage" class="hidden"><div class="panel"><h2>Ringkasan operasional</h2><div id="report"></div><p class="hint">Estimasi dihitung dari booking yang tersimpan.</p></div></section>
-<section id="usersPage" class="hidden"><div class="notice">Admin dapat mengubah peran anggota tim. Buat/invite akun melalui Supabase Authentication, lalu perbarui perannya di sini.</div><div class="tablewrap" id="usersTable"></div></section>
-</main></div>
-<div id="modal" class="modalback hidden"><div class="modal"><div class="modalhead"><h2 id="modalTitle">Form</h2><button class="secondary" id="close">Tutup</button></div><div id="modalBody"></div></div></div>
-<script>
-const CONFIG={SUPABASE_URL:"GANTI_DENGAN_SUPABASE_URL",SUPABASE_ANON_KEY:"GANTI_DENGAN_SUPABASE_ANON_KEY"};
-let sb,user,profile,role="driver",page="dashboard",rows=[],tableName="",editing=null,month=new Date(),cache={drivers:[],guides:[],bookings:[]};
-const defs={
-drivers:[["name","Nama lengkap","text",1],["phone","WhatsApp","tel",1],["address","Alamat","text"],["license_no","Nomor SIM","text"],["vehicle_type","Jenis kendaraan","text"],["plate_no","Nomor polisi","text"],["vehicle_capacity","Kapasitas orang","number"],["rate","Tarif harian Rp","number"],["vehicle_doc_url","Link dokumen kendaraan","url"],["vehicle_doc_expiry","Masa berlaku dokumen","date"],["status","Status","select",0,["Aktif","Tidak Aktif"]],["user_id","Akun pengguna terkait","selectUser"]],
-guides:[["name","Nama lengkap","text",1],["phone","WhatsApp","tel",1],["address","Alamat","text"],["languages","Bahasa","text"],["service_area","Area pelayanan","text"],["experience_years","Pengalaman tahun","number"],["rate","Tarif harian Rp","number"],["status","Status","select",0,["Aktif","Tidak Aktif"]],["user_id","Akun pengguna terkait","selectUser"]],
-bookings:[["booking_date","Tanggal","date",1],["guest_name","Nama tamu","text",1],["guest_phone","WhatsApp tamu","tel"],["hotel","Hotel / lokasi jemput","text"],["destination","Tujuan wisata","text"],["driver_id","Driver","selectRef","drivers"],["guide_id","Guide","selectRef","guides"],["guest_count","Jumlah tamu","number"],["price","Harga booking Rp","number"],["driver_commission","Komisi driver Rp","number"],["guide_commission","Komisi guide Rp","number"],["commission_status","Status pembayaran komisi","select",0,["Belum Dibayar","Dibayar"]],["status","Status booking","select",0,["Menunggu","Dikonfirmasi","Berjalan","Selesai","Dibatalkan"]],["notes","Catatan","textarea"]]
-};
-const titles={drivers:"Driver",guides:"Guide",bookings:"Booking",calendar:"Kalender",commissions:"Komisi",users:"Pengguna",reports:"Laporan",dashboard:"Dashboard"};
-const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n||0)),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function init(){if(CONFIG.SUPABASE_URL.startsWith("GANTI")){$("authmsg").textContent="Isi URL dan anon key Supabase di index.html sesuai README.";return}sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);let {data:{session}}=await sb.auth.getSession();if(session)await enter(session);sb.auth.onAuthStateChange(async(_,s)=>{if(s)await enter(s);else{$("app").classList.add("hidden");$("login").classList.remove("hidden")}})}
-async function auth(){let {error}=await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});$("authmsg").textContent=error?error.message:"Berhasil masuk"}
-async function enter(s){user=s.user;let {data,error}=await sb.from("profiles").select("*").eq("id",user.id).single();if(error){alert("Profil belum tersedia. Pastikan schema.sql sudah dijalankan. "+error.message);return}profile=data;role=data.role;$("login").classList.add("hidden");$("app").classList.remove("hidden");$("who").textContent=(data.full_name||user.email)+" · "+role;$("today").textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("usersNav").classList.toggle("hiddenrole",role!=="admin");await refresh()}
-async function logout(){await sb.auth.signOut()}
-function canManage(){return role==="admin"||role==="ops"}
-function allowed(t){if(t==="drivers"||t==="guides")return canManage();return canManage()}
-async function get(t){let q=sb.from(t).select("*");if(t==="bookings")q=q.order("booking_date");else q=q.order("name");let {data,error}=await q;if(error)throw error;return data||[]}
-async function refresh(){try{for(let t of ["drivers","guides","bookings"])cache[t]=await get(t);$("mD").textContent=cache.drivers.length;$("mG").textContent=cache.guides.length;$("mB").textContent=cache.bookings.filter(x=>!["Selesai","Dibatalkan"].includes(x.status)).length;let today=new Date().toISOString().slice(0,10);$("mT").textContent=cache.bookings.filter(x=>x.booking_date===today).length;$("upcoming").innerHTML=tableHtml("bookings",cache.bookings.filter(x=>x.booking_date>=today).slice(0,7),true);renderCalendar();renderCommissions();renderReports();if(page==="drivers"||page==="guides"||page==="bookings")await load(page);if(page==="users")await loadUsers()}catch(e){alert("Database: "+e.message)}}
-function go(p){page=p;document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));["dashboard","dataPage","calendarPage","commissionPage","reportsPage","usersPage"].forEach(id=>$(id).classList.add("hidden"));let section={dashboard:"dashboard",drivers:"dataPage",guides:"dataPage",bookings:"dataPage",calendar:"calendarPage",commissions:"commissionPage",reports:"reportsPage",users:"usersPage"}[p];$(section).classList.remove("hidden");$("pageTitle").textContent=titles[p];if(["drivers","guides","bookings"].includes(p))load(p);if(p==="users")loadUsers();if(p==="calendar")renderCalendar()}
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.page));
-async function load(t){tableName=t;rows=cache[t]||await get(t);renderRows()}
-function renderRows(){let q=$("search").value.toLowerCase();$("table").innerHTML=tableHtml(tableName,rows.filter(r=>JSON.stringify(r).toLowerCase().includes(q)),false)}
-function tableHtml(t,data,compact){if(!data.length)return '<div class="empty">Belum ada data.</div>';let cols=t==="drivers"?["name","phone","vehicle_type","plate_no","vehicle_doc_expiry","rate","status"]:t==="guides"?["name","phone","languages","service_area","rate","status"]:["booking_date","guest_name","hotel","destination","status","price"];
-let heads={name:"Nama",phone:"WhatsApp",vehicle_type:"Kendaraan",plate_no:"No. Polisi",vehicle_doc_expiry:"Dokumen berlaku",rate:"Tarif",status:"Status",languages:"Bahasa",service_area:"Area",booking_date:"Tanggal",guest_name:"Tamu",hotel:"Hotel/Jemput",destination:"Tujuan",price:"Harga"};
-return `<table><thead><tr>${cols.map(c=>`<th>${heads[c]||c}</th>`).join("")}${compact?"":"<th>Aksi</th>"}</tr></thead><tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${c==="rate"||c==="price"?money(r[c]):c==="status"?`<span class="pill ${["Tidak Aktif","Dibatalkan"].includes(r[c])?"off":""}">${esc(r[c])}</span>`:c==="phone"&&r[c]?`<a target="_blank" href="https://wa.me/${String(r[c]).replace(/\D/g,"")}">${esc(r[c])}</a>`:esc(r[c])}</td>`).join("")}${compact?"":`<td><div class="actions"><button class="small secondary" onclick="edit('${r.id}')">Edit</button>${canManage()?`<button class="small danger" onclick="del('${r.id}')">Hapus</button>`:""}</div></td>`}</tr>`).join("")}</tbody></table>`}
-async function form(t,row){if(!canManage()){alert("Hanya admin/operasional yang dapat mengubah data.");return}tableName=t;editing=row;let html='<div class="formgrid">';for(let f of defs[t]){let [k,l,type,req,extra]=f,v=row?.[k]??"",control="";
-if(type==="select")control=`<select id="f_${k}">${extra.map(x=>`<option ${v===x?"selected":""}>${x}</option>`).join("")}</select>`;
-else if(type==="selectRef"){control=`<select id="f_${k}"><option value="">— Pilih —</option>${cache[extra].map(x=>`<option value="${x.id}" ${v===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>`}
-else if(type==="selectUser"){let us=await userList();control=`<select id="f_${k}"><option value="">— Tidak dihubungkan —</option>${us.map(x=>`<option value="${x.id}" ${v===x.id?"selected":""}>${esc(x.full_name||x.email||x.id)}</option>`).join("")}</select>`}
-else if(type==="textarea")control=`<textarea id="f_${k}">${esc(v)}</textarea>`;else control=`<input id="f_${k}" type="${type}" value="${esc(v)}" ${req?"required":""}>`;
-html+=`<div><label>${l}${req?" *":""}</label>${control}</div>`}html+=`</div><div class="right" style="justify-content:flex-end;margin-top:18px"><button onclick="save()">Simpan</button></div>`;$("modalTitle").textContent=(row?"Edit ":"Tambah ")+titles[t];$("modalBody").innerHTML=html;$("modal").classList.remove("hidden")}
-async function save(){let obj={};for(let f of defs[tableName]){let v=$("f_"+f[0]).value;obj[f[0]]=v===""?null:(f[2]==="number"?Number(v):v)}let q=editing?sb.from(tableName).update(obj).eq("id",editing.id):sb.from(tableName).insert(obj);let {error}=await q;if(error){alert(error.message);return}$("modal").classList.add("hidden");await refresh()}
-async function edit(id){await form(tableName,rows.find(x=>x.id===id))}
-async function del(id){if(!confirm("Hapus data ini?"))return;let {error}=await sb.from(tableName).delete().eq("id",id);if(error)alert(error.message);else await refresh()}
-async function userList(){let {data,error}=await sb.from("profiles").select("id,email,full_name,role");if(error)return [];return data||[]}
-async function loadUsers(){if(role!=="admin")return;let u=await userList();$("usersTable").innerHTML='<table><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>'+u.map(x=>`<tr><td>${esc(x.full_name)}</td><td>${esc(x.email)}</td><td><select id="role_${x.id}">${["admin","ops","driver","guide"].map(r=>`<option ${r===x.role?"selected":""}>${r}</option>`).join("")}</select></td><td><button class="small" onclick="setRole('${x.id}')">Simpan peran</button></td></tr>`).join("")+'</tbody></table>'}
-async function setRole(id){let r=$("role_"+id).value;if(id===user.id&&r!=="admin"&&!confirm("Anda akan menghapus hak admin sendiri. Lanjutkan?"))return;let {error}=await sb.from("profiles").update({role:r}).eq("id",id);if(error)alert(error.message);else{alert("Peran diperbarui");await loadUsers()}}
-function renderCalendar(){let y=month.getFullYear(),m=month.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();$("monthLabel").textContent=month.toLocaleDateString("id-ID",{month:"long",year:"numeric"});let html=["Min","Sen","Sel","Rab","Kam","Jum","Sab"].map(x=>`<div class="dayhead">${x}</div>`).join("");for(let i=0;i<first.getDay();i++)html+='<div></div>';for(let d=1;d<=days;d++){let date=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,events=cache.bookings.filter(b=>b.booking_date===date);html+=`<div class="day"><b>${d}</b>${events.map(e=>`<div class="event" title="${esc(e.guest_name)}">${esc(e.guest_name)} · ${esc(e.status)}</div>`).join("")}</div>`}$("calendar").innerHTML=html}
-$("prevMonth").onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()};$("nextMonth").onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendar()};
-function renderCommissions(){let b=cache.bookings,total=b.reduce((s,x)=>s+Number(x.driver_commission||0)+Number(x.guide_commission||0),0),paid=b.filter(x=>x.commission_status==="Dibayar").reduce((s,x)=>s+Number(x.driver_commission||0)+Number(x.guide_commission||0),0);$("cTotal").textContent=money(total);$("cPaid").textContent=money(paid);$("cUnpaid").textContent=money(total-paid);$("commissionTable").innerHTML='<table><thead><tr><th>Tanggal</th><th>Tamu</th><th>Komisi Driver</th><th>Komisi Guide</th><th>Status</th></tr></thead><tbody>'+b.map(x=>`<tr><td>${esc(x.booking_date)}</td><td>${esc(x.guest_name)}</td><td>${money(x.driver_commission)}</td><td>${money(x.guide_commission)}</td><td>${esc(x.commission_status||"Belum Dibayar")}</td></tr>`).join("")+'</tbody></table>'}
-function renderReports(){$("report").innerHTML=`<p>Total booking: <b>${cache.bookings.length}</b></p><p>Booking selesai: <b>${cache.bookings.filter(x=>x.status==="Selesai").length}</b></p><p>Nilai booking: <b>${money(cache.bookings.reduce((s,x)=>s+Number(x.price||0),0))}</b></p><p>Total komisi: <b>${money(cache.bookings.reduce((s,x)=>s+Number(x.driver_commission||0)+Number(x.guide_commission||0),0))}</b></p>`}
-function exportCsv(){let cols=defs[tableName].map(x=>x[0]),data=[cols.join(","),...rows.map(r=>cols.map(c=>'"'+String(r[c]??"").replace(/"/g,'""')+'"').join(","))];let a=document.createElement("a"),url=URL.createObjectURL(new Blob(["\ufeff"+data.join("\n")],{type:"text/csv;charset=utf-8"}));a.href=url;a.download=tableName+"-bali.csv";a.click();URL.revokeObjectURL(url)}
-$("signIn").onclick=auth;$("logout").onclick=logout;$("add").onclick=()=>form(page);$("close").onclick=()=>$("modal").classList.add("hidden");$("search").oninput=renderRows;$("csv").onclick=exportCsv;init();
-</script></body></html>
+  <!-- APLIKASI SETELAH LOGIN -->
+  <div id="appArea" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Bali Driver &amp; Guide</h1>
+        <p>Sistem pengelolaan data layanan driver dan guide</p>
+      </div>
+      <div class="user-area">
+        <span id="userEmail">Memeriksa akun...</span>
+        <button id="logoutButton" class="btn" type="button">Keluar</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <nav class="nav" aria-label="Menu utama">
+        <button class="active" type="button" data-page="dashboardPage">Dashboard</button>
+        <button type="button" data-page="driversPage">Data Driver</button>
+        <button type="button" data-page="driverFormPage">Pendaftaran Driver</button>
+        <button type="button" data-page="guidesPage">Data Guide</button>
+      </nav>
+
+      <section id="dashboardPage" class="page">
+        <div class="card">
+          <h2>Selamat datang</h2>
+          <p class="muted">Anda berhasil masuk. Gunakan menu di atas untuk mengelola data driver.</p>
+          <div class="stats">
+            <div class="stat">Total Driver<strong id="totalDrivers">0</strong></div>
+            <div class="stat">Menunggu<strong id="pendingDrivers">0</strong></div>
+            <div class="stat">Disetujui<strong id="approvedDrivers">0</strong></div>
+          </div>
+          <p id="dashboardMessage" class="message"></p>
+        </div>
+      </section>
+
+      <section id="driversPage" class="page hidden">
+        <div class="card">
+          <h2>Database Driver</h2>
+          <p class="muted">Data diambil langsung dari tabel <strong>drivers</strong> pada Supabase.</p>
+          <div class="toolbar">
+            <input id="searchDriver" type="search" placeholder="Cari nama, WhatsApp, kabupaten, atau kendaraan...">
+            <button id="refreshButton" class="btn btn-secondary" type="button">Muat ulang data</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama</th><th>WhatsApp</th><th>Kabupaten</th><th>Kendaraan</th>
+                  <th>Plat Nomor</th><th>Tarif/Hari</th><th>Status</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="driverTableBody">
+                <tr><td colspan="8">Belum ada data yang dimuat.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="driverListMessage" class="message"></p>
+        </div>
+      </section>
+
+      <section id="driverFormPage" class="page hidden">
+        <div class="card">
+          <h2 id="driverFormTitle">Formulir Pendaftaran Driver</h2>
+          <p class="muted">Silakan isi data driver dengan lengkap.</p>
+          <form id="driverForm">
+            <input id="driverId" type="hidden">
+            <div class="form-grid">
+              <div class="field">
+                <label for="nama">Nama Lengkap *</label>
+                <input id="nama" type="text" maxlength="150" required>
+              </div>
+              <div class="field">
+                <label for="whatsapp">Nomor WhatsApp *</label>
+                <input id="whatsapp" type="tel" maxlength="30" required>
+              </div>
+              <div class="field">
+                <label for="kabupaten">Kabupaten/Kota *</label>
+                <select id="kabupaten" required>
+                  <option value="">Pilih kabupaten/kota</option>
+                  <option>Badung</option><option>Bangli</option><option>Buleleng</option>
+                  <option>Gianyar</option><option>Jembrana</option><option>Karangasem</option>
+                  <option>Klungkung</option><option>Tabanan</option><option>Denpasar</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="kendaraan">Jenis Kendaraan</label>
+                <select id="kendaraan">
+                  <option value="">Pilih kendaraan</option>
+                  <option>Avanza</option><option>Innova</option><option>Innova Zenix</option>
+                  <option>Hiace</option><option>Elf</option><option>Bus</option>
+                  <option>Mobil lainnya</option><option>Sepeda motor</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="alamat">Alamat</label>
+                <textarea id="alamat" maxlength="1000"></textarea>
+              </div>
+              <div class="field">
+                <label for="plat">Nomor Polisi</label>
+                <input id="plat" type="text" maxlength="20">
+              </div>
+              <div class="field">
+                <label for="kapasitas">Kapasitas Penumpang</label>
+                <input id="kapasitas" type="number" min="1" max="100">
+              </div>
+              <div class="field">
+                <label for="sim">Nomor SIM</label>
+                <input id="sim" type="text" maxlength="50">
+              </div>
+              <div class="field">
+                <label for="tarif">Tarif Harian (Rp)</label>
+                <input id="tarif" type="number" min="0" step="1000">
+              </div>
+            </div>
+            <button id="saveDriverButton" class="btn" type="submit">Simpan Data Driver</button>
+            <button id="cancelEditButton" class="btn btn-secondary hidden" type="button">Batal Edit</button>
+            <p id="driverFormMessage" class="message" role="status"></p>
+          </form>
+        </div>
+      </section>
+
+      <section id="guidesPage" class="page hidden">
+        <div class="card">
+          <h2>Database Guide</h2>
+          <p>Bagian ini disiapkan untuk pengelolaan guide. Agar fitur simpan, tampil, edit, dan hapus guide benar-benar sesuai dengan database, struktur kolom tabel <strong>guides</strong> perlu dipastikan terlebih dahulu.</p>
+          <p class="status-note">Untuk saat ini, kode ini sudah mengaktifkan pengelolaan driver. Data guide dan booking tidak diubah oleh kode ini.</p>
+        </div>
+      </section>
+
+      <div class="footer">Bali Driver &amp; Guide</div>
+    </main>
+  </div>
+
+  <script>
+    // KONFIGURASI SUPABASE
+    const SUPABASE_URL = "https://wssbbcygkikepyhzudvf.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_22gvj7q_JkIRTvCiUAUooQ_XSHdKUeq";
+
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    let currentUser = null;
+    let driversCache = [];
+
+    const $ = (id) => document.getElementById(id);
+
+    function showMessage(elementId, message, type = "") {
+      const element = $(elementId);
+      element.textContent = message;
+      element.className = "message" + (type ? " " + type : "");
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll(".page").forEach((page) => {
+        page.classList.toggle("hidden", page.id !== pageId);
+      });
+      document.querySelectorAll(".nav button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === pageId);
+      });
+      if (pageId === "driversPage") loadDrivers();
+      if (pageId === "dashboardPage") loadDashboard();
+    }
+
+    function showLoggedIn(user) {
+      currentUser = user;
+      $("loginArea").classList.add("hidden");
+      $("appArea").classList.remove("hidden");
+      $("userEmail").textContent = user.email || "Akun admin";
+      showPage("dashboardPage");
+    }
+
+    function showLoggedOut() {
+      currentUser = null;
+      $("appArea").classList.add("hidden");
+      $("loginArea").classList.remove("hidden");
+      $("loginPassword").value = "";
+    }
+
+    async function checkUserRole(user) {
+      const { data, error } = await supabaseClient
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Gagal memeriksa role:", error);
+        throw new Error("Profil akun tidak ditemukan atau tidak dapat dibaca. Pastikan tabel profiles memiliki baris akun ini dan role admin/ops.");
+      }
+
+      const role = String(data.role || "").toLowerCase();
+      if (!["admin", "ops"].includes(role)) {
+        throw new Error("Akun ini belum memiliki hak akses admin/ops.");
+      }
+      return role;
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const button = $("loginButton");
+      button.disabled = true;
+      showMessage("loginMessage", "Sedang masuk...");
+
+      const email = $("loginEmail").value.trim();
+      const password = $("loginPassword").value;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showMessage("loginMessage", "Login gagal: " + error.message, "error");
+        button.disabled = false;
+        return;
+      }
+
+      try {
+        await checkUserRole(data.user);
+        showMessage("loginMessage", "");
+        showLoggedIn(data.user);
+      } catch (roleError) {
+        await supabaseClient.auth.signOut();
+        showMessage("loginMessage", roleError.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function restoreSession() {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        console.error(error);
+        showLoggedOut();
+        return;
+      }
+      if (!data.session) {
+        showLoggedOut();
+        return;
+      }
+      try {
+        await checkUserRole(data.session.user);
+        showLoggedIn(data.session.user);
+      } catch (roleError) {
+        console.error(roleError);
+        await supabaseClient.auth.signOut();
+        showLoggedOut();
+        showMessage("loginMessage", roleError.message, "error");
+      }
+    }
+
+    async function loadDashboard() {
+      showMessage("dashboardMessage", "Memuat ringkasan...");
+      const { data, error } = await supabaseClient
+        .from("drivers")
+        .select("id,status");
+
+      if (error) {
+        console.error("Gagal memuat dashboard:", error);
+        showMessage("dashboardMessage", "Tidak dapat memuat ringkasan: " + error.message, "error");
+        return;
+      }
+
+      const rows = data || [];
+      $("totalDrivers").textContent = rows.length;
+      $("pendingDrivers").textContent = rows.filter((row) =>
+        String(row.status || "").toLowerCase() === "menunggu"
+      ).length;
+      $("approvedDrivers").textContent = rows.filter((row) =>
+        ["disetujui", "approved"].includes(String(row.status || "").toLowerCase())
+      ).length;
+      showMessage("dashboardMessage", "Ringkasan berhasil diperbarui.", "success");
+    }
+
+    async function loadDrivers() {
+      showMessage("driverListMessage", "Sedang memuat data driver...");
+      const { data, error } = await supabaseClient
+        .from("drivers")
+        .select("id,user_id,name,phone,kabupaten,address,license_no,vehicle_type,plate_no,vehicle_capacity,rate,status,created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Gagal memuat driver:", error);
+        $("driverTableBody").innerHTML = '<tr><td colspan="8">Data tidak dapat dimuat.</td></tr>';
+        showMessage("driverListMessage", "Gagal mengambil data: " + error.message, "error");
+        return;
+      }
+
+      driversCache = data || [];
+      renderDrivers();
+      showMessage("driverListMessage", driversCache.length + " data driver ditemukan.", "success");
+    }
+
+    function renderDrivers() {
+      const keyword = $("searchDriver").value.trim().toLowerCase();
+      const rows = driversCache.filter((driver) => {
+        const searchable = [
+          driver.name, driver.phone, driver.kabupaten,
+          driver.vehicle_type, driver.plate_no
+        ].join(" ").toLowerCase();
+        return searchable.includes(keyword);
+      });
+
+      if (!rows.length) {
+        $("driverTableBody").innerHTML = '<tr><td colspan="8">Belum ada data yang cocok.</td></tr>';
+        return;
+      }
+
+      $("driverTableBody").innerHTML = rows.map((driver) => {
+        const status = driver.status || "Menunggu";
+        return `
+          <tr>
+            <td>${escapeHTML(driver.name)}</td>
+            <td>${escapeHTML(driver.phone)}</td>
+            <td>${escapeHTML(driver.kabupaten)}</td>
+            <td>${escapeHTML(driver.vehicle_type)}</td>
+            <td>${escapeHTML(driver.plate_no)}</td>
+            <td>${driver.rate == null ? "-" : "Rp " + Number(driver.rate).toLocaleString("id-ID")}</td>
+            <td>
+              <select aria-label="Status ${escapeHTML(driver.name)}" onchange="updateDriverStatus('${driver.id}', this.value)">
+                ${["Menunggu", "Disetujui", "Ditolak"].map((option) =>
+                  `<option value="${option}" ${status === option ? "selected" : ""}>${option}</option>`
+                ).join("")}
+              </select>
+            </td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-small btn-secondary" type="button" onclick="editDriver('${driver.id}')">Edit</button>
+                <button class="btn btn-small btn-danger" type="button" onclick="deleteDriver('${driver.id}')">Hapus</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function resetDriverForm() {
+      $("driverForm").reset();
+      $("driverId").value = "";
+      $("driverFormTitle").textContent = "Formulir Pendaftaran Driver";
+      $("saveDriverButton").textContent = "Simpan Data Driver";
+      $("cancelEditButton").classList.add("hidden");
+      showMessage("driverFormMessage", "");
+    }
+
+    async function saveDriver(event) {
+      event.preventDefault();
+      if (!currentUser) {
+        showMessage("driverFormMessage", "Silakan login kembali.", "error");
+        return;
+      }
+
+      const saveButton = $("saveDriverButton");
+      saveButton.disabled = true;
+      showMessage("driverFormMessage", "Sedang menyimpan data...");
+
+      const capacityValue = $("kapasitas").value;
+      const rateValue = $("tarif").value;
+      const driverData = {
+        name: $("nama").value.trim(),
+        phone: $("whatsapp").value.trim(),
+        kabupaten: $("kabupaten").value,
+        address: $("alamat").value.trim() || null,
+        vehicle_type: $("kendaraan").value || null,
+        plate_no: $("plat").value.trim() || null,
+        vehicle_capacity: capacityValue ? Number(capacityValue) : null,
+        license_no: $("sim").value.trim() || null,
+        rate: rateValue ? Number(rateValue) : null
+      };
+
+      const driverId = $("driverId").value;
+      let result;
+
+      if (driverId) {
+        result = await supabaseClient.from("drivers").update(driverData).eq("id", driverId);
+      } else {
+        result = await supabaseClient.from("drivers").insert({
+          ...driverData,
+          user_id: currentUser.id
+        });
+      }
+
+      if (result.error) {
+        console.error("Gagal menyimpan data driver:", result.error);
+        showMessage("driverFormMessage", "Gagal menyimpan: " + result.error.message, "error");
+        saveButton.disabled = false;
+        return;
+      }
+
+      showMessage("driverFormMessage", driverId ? "Data driver berhasil diperbarui." : "Data driver berhasil disimpan.", "success");
+      resetDriverForm();
+      await loadDrivers();
+      await loadDashboard();
+      showPage("driversPage");
+      saveButton.disabled = false;
+    }
+
+    function editDriver(id) {
+      const driver = driversCache.find((item) => item.id === id);
+      if (!driver) return;
+
+      $("driverId").value = driver.id;
+      $("nama").value = driver.name || "";
+      $("whatsapp").value = driver.phone || "";
+      $("kabupaten").value = driver.kabupaten || "";
+      $("alamat").value = driver.address || "";
+      $("kendaraan").value = driver.vehicle_type || "";
+      $("plat").value = driver.plate_no || "";
+      $("kapasitas").value = driver.vehicle_capacity ?? "";
+      $("sim").value = driver.license_no || "";
+      $("tarif").value = driver.rate ?? "";
+      $("driverFormTitle").textContent = "Edit Data Driver";
+      $("saveDriverButton").textContent = "Simpan Perubahan";
+      $("cancelEditButton").classList.remove("hidden");
+      showMessage("driverFormMessage", "Silakan ubah data, lalu simpan.");
+      showPage("driverFormPage");
+    }
+
+    async function updateDriverStatus(id, status) {
+      const { error } = await supabaseClient
+        .from("drivers")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Gagal mengubah status:", error);
+        alert("Gagal mengubah status: " + error.message);
+        await loadDrivers();
+        return;
+      }
+      await loadDrivers();
+      await loadDashboard();
+    }
+
+    async function deleteDriver(id) {
+      const driver = driversCache.find((item) => item.id === id);
+      if (!driver) return;
+      if (!confirm("Hapus data driver " + driver.name + "? Tindakan ini tidak dapat dibatalkan.")) return;
+
+      const { error } = await supabaseClient.from("drivers").delete().eq("id", id);
+      if (error) {
+        console.error("Gagal menghapus driver:", error);
+        alert("Gagal menghapus data: " + error.message);
+        return;
+      }
+      await loadDrivers();
+      await loadDashboard();
+    }
+
+    $("loginForm").addEventListener("submit", handleLogin);
+    $("logoutButton").addEventListener("click", async () => {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) {
+        alert("Gagal keluar: " + error.message);
+        return;
+      }
+      showLoggedOut();
+    });
+    $("driverForm").addEventListener("submit", saveDriver);
+    $("cancelEditButton").addEventListener("click", resetDriverForm);
+    $("refreshButton").addEventListener("click", loadDrivers);
+    $("searchDriver").addEventListener("input", renderDrivers);
+
+    document.querySelectorAll(".nav button").forEach((button) => {
+      button.addEventListener("click", () => showPage(button.dataset.page));
+    });
+
+    // Fungsi ini dipanggil oleh tombol Edit/Hapus dan pilihan status pada tabel.
+    window.editDriver = editDriver;
+    window.deleteDriver = deleteDriver;
+    window.updateDriverStatus = updateDriverStatus;
+
+    restoreSession();
+  </script>
+</body>
+</html>
