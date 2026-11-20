@@ -141,10 +141,25 @@
     .stat strong { display: block; margin-top: 8px; font-size: 28px; color: var(--primary); }
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 16px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
     }
-    .form-grid .full { grid-column: 1 / -1; }
+    .form-section {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 16px 0;
+      background: #fff;
+    }
+    .form-section-title {
+      margin: 0 0 14px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+      font-size: 16px;
+    }
+    .form-section .field { margin-bottom: 14px; }
+    .form-section .field:last-child { margin-bottom: 0; }
     .toolbar {
       display: flex;
       align-items: center;
@@ -172,8 +187,7 @@
       .user-area { width: 100%; justify-content: space-between; }
       .layout { padding: 14px; }
       .stats { grid-template-columns: 1fr; }
-      .form-grid { grid-template-columns: 1fr; }
-      .form-grid .full { grid-column: auto; }
+      .form-grid { grid-template-columns: minmax(0, 1fr); }
       .toolbar { align-items: stretch; flex-direction: column; }
       .toolbar input { max-width: none; }
       .card { padding: 16px; }
@@ -267,60 +281,71 @@
           <form id="driverForm">
             <input id="driverId" type="hidden">
             <div class="form-grid">
-              <div class="field">
-                <label for="nama">Nama Lengkap *</label>
-                <input id="nama" type="text" maxlength="150" required>
-              </div>
-              <div class="field">
-                <label for="whatsapp">Nomor WhatsApp *</label>
-                <input id="whatsapp" type="tel" maxlength="30" required>
-              </div>
-              <div class="field">
-                <label for="kabupaten">Kabupaten/Kota *</label>
-                <select id="kabupaten" required>
-                  <option value="">Pilih kabupaten/kota</option>
-                  <option>Badung</option><option>Bangli</option><option>Buleleng</option>
-                  <option>Gianyar</option><option>Jembrana</option><option>Karangasem</option>
-                  <option>Klungkung</option><option>Tabanan</option><option>Denpasar</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="kendaraan">Jenis Kendaraan</label>
-                <select id="kendaraan">
-                  <option value="">Pilih kendaraan</option>
-                  <option>Avanza</option><option>Innova</option><option>Innova Zenix</option>
-                  <option>Hiace</option><option>Elf</option><option>Bus</option>
-                  <option>Mobil lainnya</option><option>Sepeda motor</option>
-                </select>
-              </div>
-              <div class="field full">
-                <label for="alamat">Alamat</label>
-                <textarea id="alamat" maxlength="1000"></textarea>
-              </div>
-              <div class="field">
-                <label for="plat">Nomor Polisi</label>
-                <input id="plat" type="text" maxlength="20">
-              </div>
-              <div class="field">
-                <label for="kapasitas">Kapasitas Penumpang</label>
-                <input id="kapasitas" type="number" min="1" max="100">
-              </div>
-              <div class="field">
-                <label for="sim">Nomor SIM</label>
-                <input id="sim" type="text" maxlength="50">
-              </div>
-              <div class="field">
-                <label for="jumlah_tamu">Jumlah Tamu</label>
-                <input id="jumlah_tamu" type="number" min="0" max="100">
-              </div>
-              <div class="field">
-                <label for="asal_tamu">Asal Tamu</label>
-                <input id="asal_tamu" type="text" maxlength="150">
-              </div>
-              <div class="field full">
-                <label for="tamu_menginap_di">Tamu Menginap di</label>
-                <input id="tamu_menginap_di" type="text" maxlength="250">
-              </div>
+              <section class="form-section">
+                <h3 class="form-section-title">A. Data Pribadi dan Kontak Driver</h3>
+                <div class="field">
+                  <label for="nama">Nama Lengkap *</label>
+                  <input id="nama" type="text" maxlength="150" required>
+                </div>
+                <div class="field">
+                  <label for="whatsapp">Nomor WhatsApp *</label>
+                  <input id="whatsapp" type="tel" maxlength="30" required>
+                </div>
+                <div class="field">
+                  <label for="kabupaten">Kabupaten/Kota *</label>
+                  <select id="kabupaten" required>
+                    <option value="">Pilih kabupaten/kota</option>
+                    <option>Badung</option><option>Bangli</option><option>Buleleng</option>
+                    <option>Gianyar</option><option>Jembrana</option><option>Karangasem</option>
+                    <option>Klungkung</option><option>Tabanan</option><option>Denpasar</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="alamat">Alamat</label>
+                  <textarea id="alamat" maxlength="1000"></textarea>
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h3 class="form-section-title">B. Data Kendaraan dan SIM</h3>
+                <div class="field">
+                  <label for="kendaraan">Jenis Kendaraan</label>
+                  <select id="kendaraan">
+                    <option value="">Pilih kendaraan</option>
+                    <option>Avanza</option><option>Innova</option><option>Innova Zenix</option>
+                    <option>Hiace</option><option>Elf</option><option>Bus</option>
+                    <option>Mobil lainnya</option><option>Sepeda motor</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="plat">Nomor Polisi</label>
+                  <input id="plat" type="text" maxlength="20">
+                </div>
+                <div class="field">
+                  <label for="kapasitas">Kapasitas Penumpang</label>
+                  <input id="kapasitas" type="number" min="1" max="100">
+                </div>
+                <div class="field">
+                  <label for="sim">Nomor SIM</label>
+                  <input id="sim" type="text" maxlength="50">
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h3 class="form-section-title">C. Data Tamu</h3>
+                <div class="field">
+                  <label for="jumlah_tamu">Jumlah Tamu</label>
+                  <input id="jumlah_tamu" type="number" min="0" max="100">
+                </div>
+                <div class="field">
+                  <label for="asal_tamu">Asal Tamu</label>
+                  <input id="asal_tamu" type="text" maxlength="150">
+                </div>
+                <div class="field">
+                  <label for="tamu_menginap_di">Tamu Menginap di</label>
+                  <input id="tamu_menginap_di" type="text" maxlength="250">
+                </div>
+              </section>
             </div>
             <button id="saveDriverButton" class="btn" type="submit">Simpan Data Driver</button>
             <button id="cancelEditButton" class="btn btn-secondary hidden" type="button">Batal Edit</button>
