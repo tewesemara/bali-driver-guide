@@ -248,7 +248,7 @@
               <thead>
                 <tr>
                   <th>Nama</th><th>WhatsApp</th><th>Kabupaten</th><th>Kendaraan</th>
-                  <th>Plat Nomor</th><th>Tarif/Hari</th><th>Status</th><th>Aksi</th>
+                  <th>Plat Nomor</th><th>Kapasitas</th><th>Status</th><th>Aksi</th>
                 </tr>
               </thead>
               <tbody id="driverTableBody">
@@ -310,8 +310,16 @@
                 <input id="sim" type="text" maxlength="50">
               </div>
               <div class="field">
-                <label for="tarif">Tarif Harian (Rp)</label>
-                <input id="tarif" type="number" min="0" step="1000">
+                <label for="jumlah_tamu">Jumlah Tamu</label>
+                <input id="jumlah_tamu" type="number" min="0" max="100">
+              </div>
+              <div class="field">
+                <label for="asal_tamu">Asal Tamu</label>
+                <input id="asal_tamu" type="text" maxlength="150">
+              </div>
+              <div class="field full">
+                <label for="tamu_menginap_di">Tamu Menginap di</label>
+                <input id="tamu_menginap_di" type="text" maxlength="250">
               </div>
             </div>
             <button id="saveDriverButton" class="btn" type="submit">Simpan Data Driver</button>
@@ -483,7 +491,7 @@
       showMessage("driverListMessage", "Sedang memuat data driver...");
       const { data, error } = await supabaseClient
         .from("drivers")
-        .select("id,user_id,name,phone,kabupaten,address,license_no,vehicle_type,plate_no,vehicle_capacity,rate,status,created_at")
+        .select("id,nama,whatsapp,kabupaten,alamat,kendaraan,plat,kapasitas,sim,jumlah_tamu,asal_tamu,tamu_menginap_di,status,created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -502,8 +510,8 @@
       const keyword = $("searchDriver").value.trim().toLowerCase();
       const rows = driversCache.filter((driver) => {
         const searchable = [
-          driver.name, driver.phone, driver.kabupaten,
-          driver.vehicle_type, driver.plate_no
+          driver.nama, driver.whatsapp, driver.kabupaten,
+          driver.kendaraan, driver.plat
         ].join(" ").toLowerCase();
         return searchable.includes(keyword);
       });
@@ -517,14 +525,14 @@
         const status = driver.status || "Menunggu";
         return `
           <tr>
-            <td>${escapeHTML(driver.name)}</td>
-            <td>${escapeHTML(driver.phone)}</td>
+            <td>${escapeHTML(driver.nama)}</td>
+            <td>${escapeHTML(driver.whatsapp)}</td>
             <td>${escapeHTML(driver.kabupaten)}</td>
-            <td>${escapeHTML(driver.vehicle_type)}</td>
-            <td>${escapeHTML(driver.plate_no)}</td>
-            <td>${driver.rate == null ? "-" : "Rp " + Number(driver.rate).toLocaleString("id-ID")}</td>
+            <td>${escapeHTML(driver.kendaraan)}</td>
+            <td>${escapeHTML(driver.plat)}</td>
+            <td>${driver.kapasitas == null ? "-" : escapeHTML(driver.kapasitas)}</td>
             <td>
-              <select aria-label="Status ${escapeHTML(driver.name)}" onchange="updateDriverStatus('${driver.id}', this.value)">
+              <select aria-label="Status ${escapeHTML(driver.nama)}" onchange="updateDriverStatus('${driver.id}', this.value)">
                 ${["Menunggu", "Disetujui", "Ditolak"].map((option) =>
                   `<option value="${option}" ${status === option ? "selected" : ""}>${option}</option>`
                 ).join("")}
@@ -561,17 +569,18 @@
       showMessage("driverFormMessage", "Sedang menyimpan data...");
 
       const capacityValue = $("kapasitas").value;
-      const rateValue = $("tarif").value;
       const driverData = {
-        name: $("nama").value.trim(),
-        phone: $("whatsapp").value.trim(),
+        nama: $("nama").value.trim(),
+        whatsapp: $("whatsapp").value.trim(),
         kabupaten: $("kabupaten").value,
-        address: $("alamat").value.trim() || null,
-        vehicle_type: $("kendaraan").value || null,
-        plate_no: $("plat").value.trim() || null,
-        vehicle_capacity: capacityValue ? Number(capacityValue) : null,
-        license_no: $("sim").value.trim() || null,
-        rate: rateValue ? Number(rateValue) : null
+        alamat: $("alamat").value.trim() || null,
+        kendaraan: $("kendaraan").value || null,
+        plat: $("plat").value.trim() || null,
+        kapasitas: capacityValue ? Number(capacityValue) : null,
+        sim: $("sim").value.trim() || null,
+        jumlah_tamu: $("jumlah_tamu").value ? Number($("jumlah_tamu").value) : null,
+        asal_tamu: $("asal_tamu").value.trim() || null,
+        tamu_menginap_di: $("tamu_menginap_di").value.trim() || null
       };
 
       const driverId = $("driverId").value;
@@ -580,10 +589,7 @@
       if (driverId) {
         result = await supabaseClient.from("drivers").update(driverData).eq("id", driverId);
       } else {
-        result = await supabaseClient.from("drivers").insert({
-          ...driverData,
-          user_id: currentUser.id
-        });
+        result = await supabaseClient.from("drivers").insert(driverData);
       }
 
       if (result.error) {
@@ -606,15 +612,17 @@
       if (!driver) return;
 
       $("driverId").value = driver.id;
-      $("nama").value = driver.name || "";
-      $("whatsapp").value = driver.phone || "";
+      $("nama").value = driver.nama || "";
+      $("whatsapp").value = driver.whatsapp || "";
       $("kabupaten").value = driver.kabupaten || "";
-      $("alamat").value = driver.address || "";
-      $("kendaraan").value = driver.vehicle_type || "";
-      $("plat").value = driver.plate_no || "";
-      $("kapasitas").value = driver.vehicle_capacity ?? "";
-      $("sim").value = driver.license_no || "";
-      $("tarif").value = driver.rate ?? "";
+      $("alamat").value = driver.alamat || "";
+      $("kendaraan").value = driver.kendaraan || "";
+      $("plat").value = driver.plat || "";
+      $("kapasitas").value = driver.kapasitas ?? "";
+      $("sim").value = driver.sim || "";
+      $("jumlah_tamu").value = driver.jumlah_tamu ?? "";
+      $("asal_tamu").value = driver.asal_tamu || "";
+      $("tamu_menginap_di").value = driver.tamu_menginap_di || "";
       $("driverFormTitle").textContent = "Edit Data Driver";
       $("saveDriverButton").textContent = "Simpan Perubahan";
       $("cancelEditButton").classList.remove("hidden");
@@ -641,7 +649,7 @@
     async function deleteDriver(id) {
       const driver = driversCache.find((item) => item.id === id);
       if (!driver) return;
-      if (!confirm("Hapus data driver " + driver.name + "? Tindakan ini tidak dapat dibatalkan.")) return;
+      if (!confirm("Hapus data driver " + driver.nama + "? Tindakan ini tidak dapat dibatalkan.")) return;
 
       const { error } = await supabaseClient.from("drivers").delete().eq("id", id);
       if (error) {
