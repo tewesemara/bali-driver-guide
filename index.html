@@ -2,371 +2,916 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bali Driver & Guide</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bali Driver & Guide - Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; }
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+:root {
+  --primary: #087e72;
+  --dark: #06645b;
+  --bg: #f3f6f8;
+  --border: #dce4e8;
+  --text: #263238;
+}
 
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: #f3f6f8;
-      color: #263238;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
-    .container {
-      width: 100%;
-      max-width: 760px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 28px;
-      border-radius: 12px;
-      box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-    }
+.hidden { display: none !important; }
 
-    header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
+button, input, select, textarea {
+  font: inherit;
+}
 
-    header h1 {
-      margin: 0 0 10px;
-      color: #087e72;
-      font-size: 28px;
-    }
+button { cursor: pointer; }
 
-    header p {
-      margin: 0;
-      color: #667085;
-      line-height: 1.5;
-    }
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #dff3ef, #f3f6f8);
+}
 
-    .form-section {
-      margin-bottom: 25px;
-      padding: 20px;
-      background: #f8fafb;
-      border: 1px solid #e1e8ec;
-      border-radius: 9px;
-    }
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 5px 25px #00000012;
+}
 
-    .form-section h2 {
-      margin: 0 0 18px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #dce9e7;
-      color: #087e72;
-      font-size: 18px;
-    }
+.login-card h1 {
+  color: var(--primary);
+  margin-top: 0;
+}
 
-    .form-group {
-      margin-bottom: 16px;
-    }
+.topbar {
+  background: var(--primary);
+  color: white;
+  padding: 18px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
 
-    .form-group:last-child {
-      margin-bottom: 0;
-    }
+.topbar h1 {
+  margin: 0;
+  font-size: 22px;
+}
 
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-weight: bold;
-      font-size: 14px;
-    }
+.topbar p {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
 
-    input, select, textarea {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #cbd5dc;
-      border-radius: 6px;
-      background: #ffffff;
-      font-family: inherit;
-      font-size: 15px;
-    }
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
 
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #087e72;
-      box-shadow: 0 0 0 2px rgba(8,126,114,0.12);
-    }
+.container {
+  max-width: 1150px;
+  margin: auto;
+  padding: 22px;
+}
 
-    textarea {
-      min-height: 85px;
-      resize: vertical;
-    }
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px #00000008;
+}
 
-    .required {
-      color: #d93025;
-    }
+.card h2 {
+  margin-top: 0;
+  color: var(--primary);
+  font-size: 20px;
+}
 
-    button {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 7px;
-      background: #087e72;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.section-title {
+  margin: 22px 0 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--primary);
+  font-size: 17px;
+}
 
-    button:hover {
-      background: #06665d;
-    }
+.field {
+  margin-bottom: 15px;
+}
 
-    button:disabled {
-      background: #9aaba8;
-      cursor: not-allowed;
-    }
+.field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 7px;
+  font-size: 14px;
+}
 
-    #pesan {
-      display: none;
-      margin-top: 18px;
-      padding: 13px;
-      border-radius: 6px;
-      line-height: 1.5;
-      font-size: 14px;
-    }
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5dc;
+  border-radius: 7px;
+  background: white;
+  font-size: 15px;
+}
 
-    #pesan.sukses {
-      display: block;
-      background: #e7f6ec;
-      color: #176b35;
-      border: 1px solid #b7e2c3;
-    }
+.field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
 
-    #pesan.gagal {
-      display: block;
-      background: #fff0ef;
-      color: #a12622;
-      border: 1px solid #f3c1bd;
-    }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px #087e7218;
+}
 
-    .catatan {
-      margin-top: 18px;
-      color: #667085;
-      font-size: 12px;
-      text-align: center;
-      line-height: 1.5;
-    }
+.btn {
+  border: none;
+  border-radius: 7px;
+  padding: 11px 16px;
+  background: var(--primary);
+  color: white;
+  font-weight: bold;
+}
 
-    @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
+.btn:hover { background: var(--dark); }
 
-      .container {
-        margin: 5px auto;
-        padding: 17px;
-      }
+.btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
 
-      header h1 {
-        font-size: 23px;
-      }
+.btn-light {
+  background: white;
+  color: var(--primary);
+}
 
-      .form-section {
-        padding: 15px;
-      }
-    }
-  </style>
+.btn-gray {
+  background: #e8eef1;
+  color: #263238;
+}
+
+.btn-red {
+  background: #c62828;
+}
+
+.full {
+  width: 100%;
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.success { color: #16834a; }
+.error { color: #c62828; }
+
+.search-area {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.search-area input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #cbd5dc;
+  border-radius: 7px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+th {
+  background: #f2f7f6;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.actions button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.footer {
+  text-align: center;
+  color: #77838a;
+  font-size: 12px;
+  padding: 20px;
+}
+
+@media(max-width:650px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-area {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .container { padding: 12px; }
+
+  .card { padding: 16px; }
+
+  .search-area {
+    flex-direction: column;
+  }
+}
+</style>
 </head>
 
 <body>
 
+<!-- HALAMAN LOGIN -->
+<section id="loginPage" class="login-page">
+  <div class="login-card">
+    <h1>Bali Driver & Guide</h1>
+    <p>Login khusus Administrator</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Email Admin</label>
+        <input id="email" type="email" required
+               autocomplete="username">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" required
+               autocomplete="current-password">
+      </div>
+
+      <button id="loginButton" class="btn full" type="submit">
+        LOGIN ADMIN
+      </button>
+
+      <p id="loginMessage" class="message"></p>
+    </form>
+  </div>
+</section>
+
+<!-- DASHBOARD ADMIN -->
+<div id="dashboard" class="hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Bali Driver & Guide</h1>
+      <p>Dashboard Administrator</p>
+    </div>
+
+    <div class="user-area">
+      <span id="adminEmail"></span>
+      <button id="logoutButton" class="btn btn-light">
+        Keluar
+      </button>
+    </div>
+  </header>
+
   <main class="container">
 
-    <header>
-      <h1>Bali Driver & Guide</h1>
-      <p>Formulir Pendaftaran Driver dan Informasi Tamu</p>
-    </header>
+    <!-- FORM INPUT -->
+    <section class="card">
+      <h2 id="formTitle">Input Data Driver</h2>
+      <p>Silakan masukkan data driver dengan lengkap.</p>
 
-    <form id="formDriver">
+      <form id="driverForm">
+        <input type="hidden" id="driverId">
 
-      <!-- BAGIAN A -->
-      <section class="form-section">
-        <h2>A. Data Pribadi dan Kontak Driver</h2>
+        <h3 class="section-title">
+          A. Data Pribadi dan Kontak Driver
+        </h3>
 
-        <div class="form-group">
-          <label for="nama">Nama Lengkap <span class="required">*</span></label>
-          <input type="text" id="nama" required placeholder="Masukkan nama lengkap">
+        <div class="field">
+          <label>Nama Lengkap *</label>
+          <input id="nama" type="text" required>
         </div>
 
-        <div class="form-group">
-          <label for="whatsapp">Nomor WhatsApp <span class="required">*</span></label>
-          <input type="tel" id="whatsapp" required placeholder="Contoh: 081234567890">
+        <div class="field">
+          <label>Nomor WhatsApp *</label>
+          <input id="whatsapp" type="tel" required>
         </div>
 
-        <div class="form-group">
-          <label for="kabupaten">Kabupaten <span class="required">*</span></label>
+        <div class="field">
+          <label>Kabupaten/Kota *</label>
           <select id="kabupaten" required>
             <option value="">Pilih Kabupaten/Kota</option>
-            <option>Denpasar</option>
             <option>Badung</option>
-            <option>Gianyar</option>
-            <option>Tabanan</option>
             <option>Bangli</option>
-            <option>Klungkung</option>
-            <option>Karangasem</option>
             <option>Buleleng</option>
+            <option>Denpasar</option>
+            <option>Gianyar</option>
             <option>Jembrana</option>
+            <option>Karangasem</option>
+            <option>Klungkung</option>
+            <option>Tabanan</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <label for="alamat">Alamat Lengkap <span class="required">*</span></label>
-          <textarea id="alamat" required placeholder="Masukkan alamat lengkap"></textarea>
+        <div class="field">
+          <label>Alamat Lengkap</label>
+          <textarea id="alamat"></textarea>
         </div>
-      </section>
 
-      <!-- BAGIAN B -->
-      <section class="form-section">
-        <h2>B. Data Kendaraan dan SIM</h2>
+        <h3 class="section-title">
+          B. Data Kendaraan dan SIM
+        </h3>
 
-        <div class="form-group">
-          <label for="kendaraan">Jenis Kendaraan <span class="required">*</span></label>
-          <select id="kendaraan" required>
-            <option value="">Pilih Jenis Kendaraan</option>
+        <div class="field">
+          <label>Jenis Kendaraan</label>
+          <select id="kendaraan">
+            <option value="">Pilih Kendaraan</option>
             <option>Avanza</option>
             <option>Innova</option>
             <option>Innova Zenix</option>
             <option>Hiace</option>
             <option>Elf</option>
-            <option>APV</option>
             <option>Bus</option>
-            <option>Lainnya</option>
+            <option>APV</option>
+            <option>Mobil lainnya</option>
+            <option>Sepeda motor</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <label for="plat">Nomor Polisi <span class="required">*</span></label>
-          <input type="text" id="plat" required placeholder="Contoh: DK 1234 AB">
+        <div class="field">
+          <label>Nomor Polisi</label>
+          <input id="plat" type="text">
         </div>
 
-        <div class="form-group">
-          <label for="kapasitas">Kapasitas Penumpang <span class="required">*</span></label>
-          <input type="number" id="kapasitas" required min="1" placeholder="Jumlah penumpang">
+        <div class="field">
+          <label>Nomor SIM</label>
+          <input id="sim" type="text">
         </div>
 
-        <div class="form-group">
-          <label for="sim">Nomor SIM <span class="required">*</span></label>
-          <input type="text" id="sim" required placeholder="Masukkan nomor SIM">
-        </div>
-      </section>
+        <h3 class="section-title">
+          C. Data Tamu
+        </h3>
 
-      <!-- BAGIAN C -->
-      <section class="form-section">
-        <h2>C. Data Tamu</h2>
-
-        <div class="form-group">
-          <label for="jumlah_tamu">Jumlah Tamu</label>
-          <input type="number" id="jumlah_tamu" min="0" placeholder="Jumlah tamu">
+        <div class="field">
+          <label>Jumlah Tamu</label>
+          <input id="jumlah_tamu" type="number" min="0">
         </div>
 
-        <div class="form-group">
-          <label for="asal_tamu">Asal Tamu</label>
-          <input type="text" id="asal_tamu" placeholder="Contoh: Australia, Jepang, Indonesia">
+        <div class="field">
+          <label>Asal Tamu</label>
+          <input id="asal_tamu" type="text">
         </div>
 
-        <div class="form-group">
-          <label for="tamu_menginap_di">Tamu Menginap di</label>
-          <input type="text" id="tamu_menginap_di" placeholder="Nama hotel atau wilayah tempat menginap">
+        <div class="field">
+          <label>Tamu Menginap di</label>
+          <input id="tamu_menginap_di" type="text">
         </div>
-      </section>
 
-      <button type="submit" id="tombolSimpan">
-        Simpan Data Driver
-      </button>
+        <button id="saveButton" class="btn" type="submit">
+          SIMPAN DATA DRIVER
+        </button>
 
-      <div id="pesan" role="status"></div>
+        <button id="cancelButton" class="btn btn-gray hidden"
+                type="button">
+          BATAL EDIT
+        </button>
 
-    </form>
+        <p id="formMessage" class="message"></p>
+      </form>
+    </section>
 
-    <p class="catatan">
-      Bali Driver & Guide<br>
-      Pastikan data yang dimasukkan sudah benar sebelum disimpan.
-    </p>
+    <!-- DATABASE DAN PENCARIAN -->
+    <section class="card">
+      <h2>Database Driver</h2>
+      <p>Cari dan lihat data driver yang sudah tersimpan.</p>
+
+      <div class="search-area">
+        <input id="searchInput" type="search"
+          placeholder="Cari nama, WhatsApp, kabupaten, kendaraan, atau plat nomor...">
+
+        <button id="refreshButton" class="btn btn-gray"
+                type="button">
+          Muat Ulang
+        </button>
+      </div>
+
+      <p id="listMessage" class="message"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Driver</th>
+              <th>WhatsApp</th>
+              <th>Kabupaten</th>
+              <th>Kendaraan</th>
+              <th>Nomor Polisi</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+
+          <tbody id="driverTable">
+            <tr>
+              <td colspan="7">Belum ada data.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
   </main>
 
-  <script>
-    // KONEKSI SUPABASE
-    const SUPABASE_URL = "https://wssbbcygkikepyhzudvf.supabase.co";
+  <footer class="footer">
+    Bali Driver & Guide - Administrator
+  </footer>
+</div>
 
-    const SUPABASE_ANON_KEY =
-      "sb_publishable_22gv7q_JkIRTvCiUAUooQ_XSHdKUeq";
+<script>
+// ======================================
+// 1. KONEKSI SUPABASE
+// ======================================
 
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+const SUPABASE_URL =
+  "https://wssbbcygkikepyhzudvf.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "sb_publishable_22gvj7q_JkIRTvCiUAUooQ_XSHdKUeq";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+let currentUser = null;
+let driversCache = [];
+
+const $ = id => document.getElementById(id);
+
+
+// ======================================
+// 2. PESAN
+// ======================================
+
+function showMessage(id, message, type = "") {
+  const el = $(id);
+  el.textContent = message;
+  el.className = "message " + type;
+}
+
+
+// ======================================
+// 3. PERIKSA HAK AKSES ADMIN
+// ======================================
+
+async function checkAdmin(user) {
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !data) {
+    throw new Error(
+      "Profil Admin tidak ditemukan atau tidak dapat dibaca."
+    );
+  }
+
+  if (String(data.role).toLowerCase() !== "admin") {
+    throw new Error(
+      "Akun ini bukan Admin. Akses ditolak."
+    );
+  }
+}
+
+
+// ======================================
+// 4. TAMPILAN LOGIN DAN DASHBOARD
+// ======================================
+
+function showDashboard(user) {
+  currentUser = user;
+
+  $("loginPage").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+
+  $("adminEmail").textContent = user.email || "Admin";
+
+  loadDrivers();
+}
+
+function showLogin() {
+  currentUser = null;
+
+  $("dashboard").classList.add("hidden");
+  $("loginPage").classList.remove("hidden");
+  $("password").value = "";
+}
+
+
+// ======================================
+// 5. PROSES LOGIN
+// ======================================
+
+$("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const button = $("loginButton");
+  button.disabled = true;
+
+  showMessage("loginMessage", "Memeriksa akun...");
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  const { data, error } = await supabaseClient.auth
+    .signInWithPassword({ email, password });
+
+  if (error) {
+    showMessage(
+      "loginMessage",
+      "Login gagal: " + error.message,
+      "error"
+    );
+    button.disabled = false;
+    return;
+  }
+
+  try {
+    await checkAdmin(data.user);
+
+    showMessage("loginMessage", "");
+    showDashboard(data.user);
+
+  } catch (err) {
+    await supabaseClient.auth.signOut();
+
+    showMessage(
+      "loginMessage",
+      err.message,
+      "error"
+    );
+  }
+
+  button.disabled = false;
+});
+
+
+// ======================================
+// 6. PERIKSA SESI LOGIN
+// ======================================
+
+async function restoreSession() {
+  const { data, error } =
+    await supabaseClient.auth.getSession();
+
+  if (error || !data.session) {
+    showLogin();
+    return;
+  }
+
+  try {
+    await checkAdmin(data.session.user);
+    showDashboard(data.session.user);
+  } catch (err) {
+    await supabaseClient.auth.signOut();
+    showLogin();
+    showMessage("loginMessage", err.message, "error");
+  }
+}
+
+
+// ======================================
+// 7. KELUAR
+// ======================================
+
+$("logoutButton").addEventListener("click", async function() {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    alert("Gagal keluar: " + error.message);
+    return;
+  }
+
+  showLogin();
+});
+
+
+// ======================================
+// 8. KEAMANAN TAMPILAN DATA
+// ======================================
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+
+// ======================================
+// 9. MEMUAT DATA DRIVER
+// ======================================
+
+async function loadDrivers() {
+  if (!currentUser) return;
+
+  showMessage("listMessage", "Memuat database...");
+
+  const { data, error } = await supabaseClient
+    .from("drivers")
+    .select(
+      "id,nama,whatsapp,kabupaten,alamat,kendaraan,plat,sim,jumlah_tamu,asal_tamu,tamu_menginap_di,status,created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    showMessage(
+      "listMessage",
+      "Gagal mengambil data: " + error.message,
+      "error"
+    );
+    return;
+  }
+
+  driversCache = data || [];
+  renderDrivers();
+
+  showMessage(
+    "listMessage",
+    driversCache.length + " data driver ditemukan.",
+    "success"
+  );
+}
+
+
+// ======================================
+// 10. PENCARIAN DAN TABEL
+// ======================================
+
+function renderDrivers() {
+  const keyword = $("searchInput").value
+    .trim()
+    .toLowerCase();
+
+  const filtered = driversCache.filter(driver => {
+    const searchText = [
+      driver.nama,
+      driver.whatsapp,
+      driver.kabupaten,
+      driver.kendaraan,
+      driver.plat
+    ].join(" ").toLowerCase();
+
+    return searchText.includes(keyword);
+  });
+
+  if (filtered.length === 0) {
+    $("driverTable").innerHTML =
+      '<tr><td colspan="7">Data tidak ditemukan.</td></tr>';
+    return;
+  }
+
+  $("driverTable").innerHTML = filtered.map(driver => `
+    <tr>
+      <td>${escapeHTML(driver.nama)}</td>
+      <td>${escapeHTML(driver.whatsapp)}</td>
+      <td>${escapeHTML(driver.kabupaten)}</td>
+      <td>${escapeHTML(driver.kendaraan)}</td>
+      <td>${escapeHTML(driver.plat)}</td>
+      <td>${escapeHTML(driver.status || "Menunggu")}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-gray"
+            type="button"
+            onclick="editDriver('${driver.id}')">
+            Edit
+          </button>
+
+          <button class="btn btn-red"
+            type="button"
+            onclick="deleteDriver('${driver.id}')">
+            Hapus
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+
+// ======================================
+// 11. SIMPAN DATA DRIVER
+// ======================================
+
+$("driverForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  if (!currentUser) {
+    showMessage("formMessage", "Silakan login kembali.", "error");
+    return;
+  }
+
+  const button = $("saveButton");
+  button.disabled = true;
+
+  showMessage("formMessage", "Sedang menyimpan data...");
+
+  const driverData = {
+    nama: $("nama").value.trim(),
+    whatsapp: $("whatsapp").value.trim(),
+    kabupaten: $("kabupaten").value,
+    alamat: $("alamat").value.trim() || null,
+    kendaraan: $("kendaraan").value || null,
+    plat: $("plat").value.trim() || null,
+    sim: $("sim").value.trim() || null,
+    jumlah_tamu: $("jumlah_tamu").value
+      ? Number($("jumlah_tamu").value) : null,
+    asal_tamu: $("asal_tamu").value.trim() || null,
+    tamu_menginap_di:
+      $("tamu_menginap_di").value.trim() || null
+  };
+
+  const id = $("driverId").value;
+
+  let result;
+
+  if (id) {
+    result = await supabaseClient
+      .from("drivers")
+      .update(driverData)
+      .eq("id", id);
+  } else {
+    result = await supabaseClient
+      .from("drivers")
+      .insert(driverData);
+  }
+
+  if (result.error) {
+    showMessage(
+      "formMessage",
+      "Gagal menyimpan: " + result.error.message,
+      "error"
+    );
+  } else {
+    showMessage(
+      "formMessage",
+      id
+        ? "Data driver berhasil diperbarui."
+        : "Data driver berhasil disimpan.",
+      "success"
     );
 
-    // PROSES SIMPAN DATA
-    const form = document.getElementById("formDriver");
-    const tombol = document.getElementById("tombolSimpan");
-    const pesan = document.getElementById("pesan");
+    resetForm();
+    await loadDrivers();
+  }
 
-    form.addEventListener("submit", async function(event) {
-      event.preventDefault();
+  button.disabled = false;
+});
 
-      tombol.disabled = true;
-      tombol.textContent = "Sedang menyimpan...";
-      pesan.className = "";
-      pesan.style.display = "none";
 
-      const dataDriver = {
-        nama: document.getElementById("nama").value.trim(),
-        whatsapp: document.getElementById("whatsapp").value.trim(),
-        kabupaten: document.getElementById("kabupaten").value,
-        alamat: document.getElementById("alamat").value.trim(),
-        kendaraan: document.getElementById("kendaraan").value,
-        plat: document.getElementById("plat").value.trim(),
-        kapasitas: Number(document.getElementById("kapasitas").value),
-        sim: document.getElementById("sim").value.trim(),
-        jumlah_tamu: document.getElementById("jumlah_tamu").value === ""
-          ? null
-          : Number(document.getElementById("jumlah_tamu").value),
-        asal_tamu: document.getElementById("asal_tamu").value.trim() || null,
-        tamu_menginap_di:
-          document.getElementById("tamu_menginap_di").value.trim() || null
-      };
+// ======================================
+// 12. EDIT DATA
+// ======================================
 
-      try {
-        const { error } = await supabaseClient
-          .from("drivers")
-          .insert([dataDriver]);
+function editDriver(id) {
+  const driver = driversCache.find(item => String(item.id) === String(id));
 
-        if (error) {
-          throw error;
-        }
+  if (!driver) return;
 
-        pesan.textContent = "Berhasil! Data driver sudah tersimpan di database.";
-        pesan.className = "sukses";
-        pesan.style.display = "block";
+  $("driverId").value = driver.id;
+  $("nama").value = driver.nama || "";
+  $("whatsapp").value = driver.whatsapp || "";
+  $("kabupaten").value = driver.kabupaten || "";
+  $("alamat").value = driver.alamat || "";
+  $("kendaraan").value = driver.kendaraan || "";
+  $("plat").value = driver.plat || "";
+  $("sim").value = driver.sim || "";
+  $("jumlah_tamu").value = driver.jumlah_tamu ?? "";
+  $("asal_tamu").value = driver.asal_tamu || "";
+  $("tamu_menginap_di").value =
+    driver.tamu_menginap_di || "";
 
-        form.reset();
+  $("formTitle").textContent = "Edit Data Driver";
+  $("saveButton").textContent = "SIMPAN PERUBAHAN";
+  $("cancelButton").classList.remove("hidden");
 
-      } catch (error) {
-        console.error("Kesalahan menyimpan data:", error);
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
-        pesan.textContent =
-          "Data belum berhasil disimpan. Pesan kesalahan: " + error.message;
+  showMessage(
+    "formMessage",
+    "Ubah data yang diperlukan, lalu simpan."
+  );
+}
 
-        pesan.className = "gagal";
-        pesan.style.display = "block";
 
-      } finally {
-        tombol.disabled = false;
-        tombol.textContent = "Simpan Data Driver";
-      }
-    });
-  </script>
+// ======================================
+// 13. HAPUS DATA
+// ======================================
 
+async function deleteDriver(id) {
+  const driver = driversCache.find(item => String(item.id) === String(id));
+
+  if (!driver) return;
+
+  const yakin = confirm(
+    "Apakah Anda yakin ingin menghapus data " +
+    driver.nama + "?"
+  );
+
+  if (!yakin) return;
+
+  const { error } = await supabaseClient
+    .from("drivers")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Gagal menghapus: " + error.message);
+    return;
+  }
+
+  alert("Data driver berhasil dihapus.");
+
+  await loadDrivers();
+}
+
+
+// ======================================
+// 14. RESET FORMULIR
+// ======================================
+
+function resetForm() {
+  $("driverForm").reset();
+  $("driverId").value = "";
+
+  $("formTitle").textContent = "Input Data Driver";
+  $("saveButton").textContent = "SIMPAN DATA DRIVER";
+  $("cancelButton").classList.add("hidden");
+
+  showMessage("formMessage", "");
+}
+
+$("cancelButton").addEventListener("click", resetForm);
+
+
+// ======================================
+// 15. PENCARIAN DAN MUAT ULANG
+// ======================================
+
+$("searchInput").addEventListener("input", renderDrivers);
+
+$("refreshButton").addEventListener("click", loadDrivers);
+
+
+// ======================================
+// 16. MULAI APLIKASI
+// ======================================
+
+restoreSession();
+
+</script>
 </body>
 </html>
