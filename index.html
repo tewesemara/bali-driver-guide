@@ -242,7 +242,7 @@ async function loadDrivers() {
   message("listMessage", "Memuat data driver...");
   const {data, error} = await db
     .from("drivers")
-    .select("id,nama,whatsapp,kabupaten,alamat,kendaraan,plat,sim,jumlah_tamu,asal_tamu,tamu_menginap_di,status,created_at")
+    .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,jumlah_tamu,asal_tamu,tamu_menginap_di,status,created_at")
     .order("created_at", {ascending:false});
 
   if (error) {
@@ -255,10 +255,21 @@ async function loadDrivers() {
   renderDrivers();
 }
 
+
+  drivers = data || [];
+  document.getElementById("total").textContent = drivers.length;
+  renderDrivers();
+}
+
 function renderDrivers() {
   const keyword = document.getElementById("search").value.toLowerCase().trim();
+
   const filtered = drivers.filter(d => [
-    d.nama, d.whatsapp, d.kabupaten, d.kendaraan, d.plat
+    d.name,
+    d.phone,
+    d.kabupaten,
+    d.vehicle_type,
+    d.plate_no
   ].some(v => String(v || "").toLowerCase().includes(keyword)));
 
   const tbody = document.getElementById("driverRows");
@@ -271,11 +282,11 @@ function renderDrivers() {
   tbody.innerHTML = filtered.map((d, i) => `
     <tr>
       <td>${i+1}</td>
-      <td>${escapeHTML(d.nama)}</td>
-      <td>${escapeHTML(d.whatsapp)}</td>
+      <td>${escapeHTML(d.name)}</td>
+      <td>${escapeHTML(d.phone)}</td>
       <td>${escapeHTML(d.kabupaten)}</td>
-      <td>${escapeHTML(d.kendaraan)}</td>
-      <td>${escapeHTML(d.plat)}</td>
+      <td>${escapeHTML(d.vehicle_type)}</td>
+      <td>${escapeHTML(d.plate_no)}</td>
       <td>${escapeHTML(d.status)}</td>
       <td>
         <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
@@ -287,21 +298,44 @@ function renderDrivers() {
   message("listMessage", "Menampilkan " + filtered.length + " dari " + drivers.length + " data.");
 }
 
+
+ 
+tbody.innerHTML = filtered.map((d, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${escapeHTML(d.name)}</td>
+      <td>${escapeHTML(d.phone)}</td>
+      <td>${escapeHTML(d.kabupaten)}</td>
+      <td>${escapeHTML(d.vehicle_type)}</td>
+      <td>${escapeHTML(d.plate_no)}</td>
+      <td>${escapeHTML(d.status)}</td>
+      <td>
+        <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
+        <button class="danger" onclick="deleteDriver('${d.id}')">Hapus</button>
+      </td>
+    </tr>
+  `).join("");
+
+  message("listMessage", "Menampilkan " + filtered.length + " dari " + drivers.length + " data.");
+}
+
+
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[c]));
 }
 
+
 function getFormData() {
   return {
-    nama: document.getElementById("nama").value.trim(),
-    whatsapp: document.getElementById("whatsapp").value.trim(),
+    name: document.getElementById("nama").value.trim(),
+    phone: document.getElementById("whatsapp").value.trim(),
     kabupaten: document.getElementById("kabupaten").value.trim(),
-    alamat: document.getElementById("alamat").value.trim(),
-    kendaraan: document.getElementById("kendaraan").value.trim(),
-    plat: document.getElementById("plat").value.trim(),
-    sim: document.getElementById("sim").value.trim(),
+    address: document.getElementById("alamat").value.trim(),
+    vehicle_type: document.getElementById("kendaraan").value.trim(),
+    plate_no: document.getElementById("plat").value.trim(),
+    license_no: document.getElementById("sim").value.trim(),
     jumlah_tamu: document.getElementById("jumlah_tamu").value === ""
       ? null : Number(document.getElementById("jumlah_tamu").value),
     asal_tamu: document.getElementById("asal_tamu").value.trim(),
@@ -343,11 +377,23 @@ function editDriver(id) {
   if (!d) return;
 
   document.getElementById("driverId").value = d.id;
-  [
-    "nama","whatsapp","kabupaten","alamat","kendaraan","plat","sim",
-    "jumlah_tamu","asal_tamu","tamu_menginap_di","status"
-  ].forEach(key => {
-    document.getElementById(key).value = d[key] ?? "";
+
+  const fields = {
+    nama: d.name,
+    whatsapp: d.phone,
+    kabupaten: d.kabupaten,
+    alamat: d.address,
+    kendaraan: d.vehicle_type,
+    plat: d.plate_no,
+    sim: d.license_no,
+    jumlah_tamu: d.jumlah_tamu,
+    asal_tamu: d.asal_tamu,
+    tamu_menginap_di: d.tamu_menginap_di,
+    status: d.status
+  };
+
+  Object.entries(fields).forEach(([key, value]) => {
+    document.getElementById(key).value = value ?? "";
   });
 
   document.getElementById("formTitle").textContent = "Edit Data Driver";
@@ -355,11 +401,12 @@ function editDriver(id) {
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
+
 async function deleteDriver(id) {
   const d = drivers.find(item => String(item.id) === String(id));
   if (!d) return;
 
-  if (!confirm("Yakin ingin menghapus data driver " + d.nama + "?")) return;
+  if (!confirm("Yakin ingin menghapus data driver " + d.name + "?")) return;
 
   const {error} = await db.from("drivers").delete().eq("id", id);
 
@@ -371,6 +418,7 @@ async function deleteDriver(id) {
   message("listMessage", "Data driver berhasil dihapus.", "success");
   await loadDrivers();
 }
+
 
 function resetForm() {
   document.getElementById("driverId").value = "";
