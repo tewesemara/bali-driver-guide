@@ -265,13 +265,6 @@ async function loadDrivers() {
   document.getElementById("total").textContent = drivers.length;
   renderDrivers();
 }
-
-
-  drivers = data || [];
-  document.getElementById("total").textContent = drivers.length;
-  renderDrivers();
-}
-
 function renderDrivers() {
   const keyword = document.getElementById("search").value.toLowerCase().trim();
 
