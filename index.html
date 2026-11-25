@@ -302,28 +302,6 @@ function renderDrivers() {
   message("listMessage", "Menampilkan " + filtered.length + " dari " + drivers.length + " data.");
 }
 
-
- 
-tbody.innerHTML = filtered.map((d, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td>${escapeHTML(d.name)}</td>
-      <td>${escapeHTML(d.phone)}</td>
-      <td>${escapeHTML(d.kabupaten)}</td>
-      <td>${escapeHTML(d.vehicle_type)}</td>
-      <td>${escapeHTML(d.plate_no)}</td>
-      <td>${escapeHTML(d.status)}</td>
-      <td>
-        <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
-        <button class="danger" onclick="deleteDriver('${d.id}')">Hapus</button>
-      </td>
-    </tr>
-  `).join("");
-
-  message("listMessage", "Menampilkan " + filtered.length + " dari " + drivers.length + " data.");
-}
-
-
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
