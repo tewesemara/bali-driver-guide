@@ -22,16 +22,16 @@ body {
 header {
   background: #123b35;
   color: white;
-  padding: 22px 25px;
+  padding: 18px 25px;
 }
 
 header h2 { margin: 0; }
-header p { margin: 7px 0 0; color: #d5e5df; }
+header p { margin: 6px 0 0; color: #d5e5df; }
 
 .container {
-  max-width: 1250px;
-  margin: 25px auto;
-  padding: 0 18px;
+  width: 100%;
+  margin: 0;
+  padding: 22px;
 }
 
 .card {
@@ -127,7 +127,7 @@ button:disabled {
   color: #68757b;
 }
 
-/* DASHBOARD OWNER */
+/* STATISTIK */
 
 .stats-grid {
   display: grid;
@@ -175,18 +175,163 @@ th, td {
 
 th { background: #f3f6f5; }
 
+/* LAYOUT SIDEBAR */
+
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - 76px);
+}
+
+.sidebar {
+  width: 245px;
+  flex-shrink: 0;
+  background: #123b35;
+  color: white;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  font-size: 12px;
+  color: #b9d2c9;
+  font-weight: bold;
+  padding: 5px 12px 15px;
+  letter-spacing: 1px;
+}
+
+.nav-button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #e2eee9;
+  padding: 13px 14px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.nav-button:hover {
+  background: #205448;
+}
+
+.nav-button.active {
+  background: #28745d;
+  color: white;
+}
+
+.nav-logout {
+  margin-top: auto;
+  background: #9e3030;
+  color: white;
+}
+
+.nav-logout:hover {
+  background: #b83232;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 22px;
+}
+
+.page-heading {
+  margin-bottom: 20px;
+}
+
+.page-heading h2 {
+  margin: 0 0 6px;
+  color: #174c40;
+}
+
+.page-heading p {
+  margin: 0;
+  color: #68757b;
+  font-size: 13px;
+}
+
+.placeholder {
+  background: white;
+  border-radius: 12px;
+  padding: 35px 25px;
+  box-shadow: 0 3px 14px #0000000c;
+}
+
+.placeholder h3 {
+  margin-bottom: 10px;
+}
+
+.placeholder p {
+  color: #68757b;
+  line-height: 1.6;
+}
+
+.placeholder-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
 @media(max-width: 850px) {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .sidebar {
+    width: 205px;
+  }
 }
 
-@media(max-width:650px) {
+@media(max-width: 650px) {
   .grid { grid-template-columns: 1fr; }
+
   .card { padding: 16px; }
-  header { padding: 18px; }
+
+  header { padding: 17px; }
+
   .stat-card { padding: 15px; }
+
   .stat-value { font-size: 21px; }
+
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .sidebar-title {
+    padding: 5px 8px 10px;
+  }
+
+  .nav-menu {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+  }
+
+  .nav-button {
+    width: auto;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 11px 13px;
+    font-size: 12px;
+  }
+
+  .nav-logout {
+    margin-top: 8px;
+  }
+
+  .main-content {
+    padding: 14px;
+  }
+
+  .container {
+    padding: 14px;
+  }
 }
 </style>
 </head>
@@ -220,191 +365,362 @@ th { background: #f3f6f5; }
   </div>
 </div>
 
-<!-- DASHBOARD OWNER -->
+<!-- APLIKASI OWNER -->
 
-<div id="dashboard" class="container hidden">
+<div id="dashboard" class="app-layout hidden">
 
-  <div class="card topbar">
-    <div>
-      <h3 style="margin:0">Dashboard Owner</h3>
-      <div id="adminEmail" class="small"></div>
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar">
+
+    <div class="sidebar-title">
+      MENU OWNER
     </div>
 
-    <button id="logoutButton" class="danger">KELUAR</button>
-  </div>
+    <nav class="nav-menu">
 
-  <!-- STATISTIK -->
+      <button class="nav-button active" data-page="page-dashboard">
+        ▦ Dashboard
+      </button>
 
-  <div id="dashboardStats" class="stats-grid">
+      <button class="nav-button" data-page="page-drivers">
+        🚗 Database Driver
+      </button>
 
-    <div class="stat-card">
-      <div class="stat-label">TOTAL DRIVER</div>
-      <div id="total" class="stat-value">0</div>
+      <button class="nav-button" data-page="page-partners">
+        🏢 Data Mitra
+      </button>
+
+      <button class="nav-button" data-page="page-visits">
+        📋 Kunjungan
+      </button>
+
+      <button class="nav-button" data-page="page-commissions">
+        💰 Komisi
+      </button>
+
+      <button class="nav-button" data-page="page-reports">
+        📊 Laporan
+      </button>
+
+      <button class="nav-button" data-page="page-settings">
+        ⚙️ Pengaturan
+      </button>
+
+    </nav>
+
+    <button id="navLogoutButton" class="nav-button nav-logout">
+      ↪ Keluar
+    </button>
+
+  </aside>
+
+  <!-- KONTEN UTAMA -->
+
+  <main class="main-content">
+
+    <div class="card topbar">
+      <div>
+        <h3 style="margin:0">Panel Administrasi Owner</h3>
+        <div id="adminEmail" class="small"></div>
+      </div>
+
+      <button id="logoutButton" class="danger">
+        KELUAR
+      </button>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-label">TOTAL MITRA</div>
-      <div id="totalPartners" class="stat-value">0</div>
-    </div>
+    <!-- HALAMAN DASHBOARD -->
 
-    <div class="stat-card">
-      <div class="stat-label">TOTAL KUNJUNGAN</div>
-      <div id="totalVisits" class="stat-value">0</div>
-    </div>
+    <section id="page-dashboard" class="page-section">
 
-    <div class="stat-card">
-      <div class="stat-label">TOTAL KOMISI</div>
-      <div id="totalCommission" class="stat-value">Rp 0</div>
-    </div>
+      <div class="page-heading">
+        <h2>Dashboard Owner</h2>
+        <p>Ringkasan data Bali Driver & Guide.</p>
+      </div>
 
-  </div>
+      <div id="dashboardStats" class="stats-grid">
 
-  <div id="statsMessage" class="small" style="margin-bottom:15px"></div>
-
-  <!-- FORM DRIVER -->
-
-  <div class="card">
-    <h3 id="formTitle">Input Data Driver</h3>
-
-    <form id="driverForm">
-      <input type="hidden" id="driverId">
-
-      <div class="grid">
-
-        <div>
-          <label>Nama Driver *</label>
-          <input id="nama" required>
+        <div class="stat-card">
+          <div class="stat-label">TOTAL DRIVER</div>
+          <div id="total" class="stat-value">0</div>
         </div>
 
-        <div>
-          <label>Nomor WhatsApp *</label>
-          <input id="whatsapp" required placeholder="Contoh: 628123456789">
+        <div class="stat-card">
+          <div class="stat-label">TOTAL MITRA</div>
+          <div id="totalPartners" class="stat-value">0</div>
         </div>
 
-        <div>
-          <label>Kabupaten / Kota</label>
-          <select id="kabupaten">
-            <option value="">Pilih Kabupaten / Kota</option>
-            <option value="Badung">Kabupaten Badung</option>
-            <option value="Bangli">Kabupaten Bangli</option>
-            <option value="Buleleng">Kabupaten Buleleng</option>
-            <option value="Gianyar">Kabupaten Gianyar</option>
-            <option value="Jembrana">Kabupaten Jembrana</option>
-            <option value="Karangasem">Kabupaten Karangasem</option>
-            <option value="Klungkung">Kabupaten Klungkung</option>
-            <option value="Tabanan">Kabupaten Tabanan</option>
-            <option value="Denpasar">Kota Denpasar</option>
-          </select>
+        <div class="stat-card">
+          <div class="stat-label">TOTAL KUNJUNGAN</div>
+          <div id="totalVisits" class="stat-value">0</div>
         </div>
 
-        <div>
-          <label>Alamat</label>
-          <input id="alamat">
-        </div>
-
-        <div>
-          <label>Jenis Kendaraan</label>
-          <input id="kendaraan" placeholder="Contoh: Avanza">
-        </div>
-
-        <div>
-          <label>Nomor Polisi</label>
-          <input id="plat" placeholder="Contoh: DK 1234 AB">
-        </div>
-
-        <div>
-          <label>Nomor SIM</label>
-          <input id="sim">
-        </div>
-
-        <div>
-          <label>Jumlah Tamu</label>
-          <input id="jumlah_tamu" type="number" min="0">
-        </div>
-
-        <div>
-          <label>Asal Tamu</label>
-          <input id="asal_tamu">
-        </div>
-
-        <div>
-          <label>Tamu Menginap Di</label>
-          <input id="tamu_menginap_di">
+        <div class="stat-card">
+          <div class="stat-label">TOTAL KOMISI</div>
+          <div id="totalCommission" class="stat-value">Rp 0</div>
         </div>
 
       </div>
 
-      <div class="actions">
-        <button id="saveButton" type="submit" class="primary">
-          SIMPAN DATA
-        </button>
+      <div id="statsMessage" class="small" style="margin-bottom:15px"></div>
 
-        <button type="button" id="resetButton" class="secondary">
-          BATAL / KOSONGKAN
-        </button>
+    </section>
+
+    <!-- HALAMAN DATABASE DRIVER -->
+
+    <section id="page-drivers" class="page-section hidden">
+
+      <div class="page-heading">
+        <h2>Database Driver</h2>
+        <p>Kelola data driver Bali Driver & Guide.</p>
       </div>
-    </form>
 
-    <div id="formMessage" class="message"></div>
-  </div>
+      <!-- FORM DRIVER -->
 
-  <!-- DATABASE DRIVER -->
+      <div class="card">
+        <h3 id="formTitle">Input Data Driver</h3>
 
-  <div class="card">
+        <form id="driverForm">
+          <input type="hidden" id="driverId">
 
-    <div class="topbar">
-      <h3>Database Driver</h3>
+          <div class="grid">
 
-      <div class="actions" style="margin-top:0">
-        <button type="button" id="importButton" class="secondary">
-          IMPORT EXCEL
-        </button>
+            <div>
+              <label>Nama Driver *</label>
+              <input id="nama" required>
+            </div>
 
-        <button type="button" id="refreshButton" class="secondary">
-          MUAT ULANG
-        </button>
+            <div>
+              <label>Nomor WhatsApp *</label>
+              <input id="whatsapp" required placeholder="Contoh: 628123456789">
+            </div>
+
+            <div>
+              <label>Kabupaten / Kota</label>
+              <select id="kabupaten">
+                <option value="">Pilih Kabupaten / Kota</option>
+                <option value="Badung">Kabupaten Badung</option>
+                <option value="Bangli">Kabupaten Bangli</option>
+                <option value="Buleleng">Kabupaten Buleleng</option>
+                <option value="Gianyar">Kabupaten Gianyar</option>
+                <option value="Jembrana">Kabupaten Jembrana</option>
+                <option value="Karangasem">Kabupaten Karangasem</option>
+                <option value="Klungkung">Kabupaten Klungkung</option>
+                <option value="Tabanan">Kabupaten Tabanan</option>
+                <option value="Denpasar">Kota Denpasar</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Alamat</label>
+              <input id="alamat">
+            </div>
+
+            <div>
+              <label>Jenis Kendaraan</label>
+              <input id="kendaraan" placeholder="Contoh: Avanza">
+            </div>
+
+            <div>
+              <label>Nomor Polisi</label>
+              <input id="plat" placeholder="Contoh: DK 1234 AB">
+            </div>
+
+            <div>
+              <label>Nomor SIM</label>
+              <input id="sim">
+            </div>
+
+            <div>
+              <label>Jumlah Tamu</label>
+              <input id="jumlah_tamu" type="number" min="0">
+            </div>
+
+            <div>
+              <label>Asal Tamu</label>
+              <input id="asal_tamu">
+            </div>
+
+            <div>
+              <label>Tamu Menginap Di</label>
+              <input id="tamu_menginap_di">
+            </div>
+
+          </div>
+
+          <div class="actions">
+            <button id="saveButton" type="submit" class="primary">
+              SIMPAN DATA
+            </button>
+
+            <button type="button" id="resetButton" class="secondary">
+              BATAL / KOSONGKAN
+            </button>
+          </div>
+        </form>
+
+        <div id="formMessage" class="message"></div>
       </div>
-    </div>
 
-    <input
-      type="file"
-      id="excelFile"
-      accept=".xlsx,.xls"
-      style="display:none"
-    >
+      <!-- TABEL DRIVER -->
 
-    <div id="excelPreview"></div>
+      <div class="card">
 
-    <label>Cari Data Driver</label>
+        <div class="topbar">
+          <h3>Daftar Driver</h3>
 
-    <input
-      id="search"
-      placeholder="Cari nama, WhatsApp, kabupaten, kendaraan, plat..."
-    >
+          <div class="actions" style="margin-top:0">
+            <button type="button" id="importButton" class="secondary">
+              IMPORT EXCEL
+            </button>
 
-    <div id="listMessage" class="small" style="margin:12px 0"></div>
+            <button type="button" id="refreshButton" class="secondary">
+              MUAT ULANG
+            </button>
+          </div>
+        </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>No.</th>
-            <th>Nama</th>
-            <th>WhatsApp</th>
-            <th>Kabupaten</th>
-            <th>Kendaraan</th>
-            <th>Plat</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
+        <input
+          type="file"
+          id="excelFile"
+          accept=".xlsx,.xls"
+          style="display:none"
+        >
 
-        <tbody id="driverRows">
-          <tr><td colspan="7">Belum ada data.</td></tr>
-        </tbody>
-      </table>
-    </div>
+        <div id="excelPreview"></div>
 
-  </div>
+        <label>Cari Data Driver</label>
+
+        <input
+          id="search"
+          placeholder="Cari nama, WhatsApp, kabupaten, kendaraan, plat..."
+        >
+
+        <div id="listMessage" class="small" style="margin:12px 0"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Nama</th>
+                <th>WhatsApp</th>
+                <th>Kabupaten</th>
+                <th>Kendaraan</th>
+                <th>Plat</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody id="driverRows">
+              <tr><td colspan="7">Belum ada data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- HALAMAN DATA MITRA -->
+
+    <section id="page-partners" class="page-section hidden">
+      <div class="page-heading">
+        <h2>Data Mitra</h2>
+        <p>Pengelolaan tempat wisata dan mitra Bali Driver & Guide.</p>
+      </div>
+
+      <div class="placeholder">
+        <div class="placeholder-icon">🏢</div>
+        <h3>Pengelolaan Data Mitra</h3>
+        <p>
+          Halaman ini akan digunakan untuk melihat pendaftaran mitra,
+          memeriksa status mitra, dan mengelola data tempat wisata.
+        </p>
+        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
+      </div>
+    </section>
+
+    <!-- HALAMAN KUNJUNGAN -->
+
+    <section id="page-visits" class="page-section hidden">
+      <div class="page-heading">
+        <h2>Kunjungan</h2>
+        <p>Pengelolaan catatan kunjungan tamu dari mitra.</p>
+      </div>
+
+      <div class="placeholder">
+        <div class="placeholder-icon">📋</div>
+        <h3>Data Kunjungan</h3>
+        <p>
+          Halaman ini akan menampilkan catatan kunjungan,
+          driver yang bertugas, jumlah tamu, asal tamu,
+          dan tempat tamu menginap.
+        </p>
+        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
+      </div>
+    </section>
+
+    <!-- HALAMAN KOMISI -->
+
+    <section id="page-commissions" class="page-section hidden">
+      <div class="page-heading">
+        <h2>Komisi</h2>
+        <p>Pengelolaan dan pemantauan komisi mitra.</p>
+      </div>
+
+      <div class="placeholder">
+        <div class="placeholder-icon">💰</div>
+        <h3>Data Komisi</h3>
+        <p>
+          Halaman ini akan menampilkan komisi dengan status
+          pending, approved, dan paid.
+        </p>
+        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
+      </div>
+    </section>
+
+    <!-- HALAMAN LAPORAN -->
+
+    <section id="page-reports" class="page-section hidden">
+      <div class="page-heading">
+        <h2>Laporan</h2>
+        <p>Ringkasan dan laporan aktivitas Bali Driver & Guide.</p>
+      </div>
+
+      <div class="placeholder">
+        <div class="placeholder-icon">📊</div>
+        <h3>Laporan Administrasi</h3>
+        <p>
+          Halaman ini akan dikembangkan untuk menampilkan laporan
+          kunjungan dan komisi secara visual, termasuk pilihan
+          ekspor ke Excel.
+        </p>
+        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
+      </div>
+    </section>
+
+    <!-- HALAMAN PENGATURAN -->
+
+    <section id="page-settings" class="page-section hidden">
+      <div class="page-heading">
+        <h2>Pengaturan</h2>
+        <p>Pengaturan administrasi aplikasi.</p>
+      </div>
+
+      <div class="placeholder">
+        <div class="placeholder-icon">⚙️</div>
+        <h3>Pengaturan Sistem</h3>
+        <p>
+          Halaman ini akan digunakan untuk pengaturan akun,
+          hak akses, dan konfigurasi aplikasi.
+        </p>
+        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
+      </div>
+    </section>
+
+  </main>
 </div>
 
 <script>
@@ -430,6 +746,37 @@ function message(id, text, type = "") {
   el.className = "message " + type;
   el.textContent = text;
 }
+
+/* NAVIGASI HALAMAN */
+
+function showPage(pageId) {
+  if (window.currentRole !== "owner") return;
+
+  document.querySelectorAll(".page-section").forEach(function(page) {
+    page.classList.add("hidden");
+  });
+
+  const selectedPage = document.getElementById(pageId);
+
+  if (!selectedPage) return;
+
+  selectedPage.classList.remove("hidden");
+
+  document.querySelectorAll(".nav-button[data-page]").forEach(function(btn) {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.page === pageId
+    );
+  });
+}
+
+/* HUBUNGKAN MENU SIDEBAR */
+
+document.querySelectorAll(".nav-button[data-page]").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    showPage(btn.dataset.page);
+  });
+});
 
 /* FORMAT RUPIAH */
 
@@ -490,6 +837,8 @@ async function checkAdmin(user) {
     document.getElementById("dashboard").classList.add("hidden");
     document.getElementById("loginPage").classList.remove("hidden");
 
+    window.currentRole = null;
+
     message(
       "loginMessage",
       "Akses ditolak. Halaman ini khusus untuk Owner.",
@@ -506,6 +855,8 @@ async function checkAdmin(user) {
 
   document.getElementById("adminEmail").textContent =
     (user.email || "") + " (OWNER)";
+
+  showPage("page-dashboard");
 
   await loadDrivers();
   await loadDashboardStats();
@@ -787,6 +1138,8 @@ function editDriver(id) {
 
   document.getElementById("formTitle").textContent = "Edit Data Driver";
 
+  showPage("page-drivers");
+
   message("formMessage", "Anda sedang mengedit data driver.");
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1007,6 +1360,9 @@ document.getElementById("loginButton")
   .addEventListener("click", login);
 
 document.getElementById("logoutButton")
+  .addEventListener("click", logout);
+
+document.getElementById("navLogoutButton")
   .addEventListener("click", logout);
 
 document.getElementById("driverForm")
