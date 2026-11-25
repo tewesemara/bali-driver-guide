@@ -409,14 +409,7 @@ async function checkAdmin(user) {
   await loadDrivers();
   return true;
 }
-  document.getElementById("loginPage").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-  document.getElementById("adminEmail").textContent = user.email || "";
-
-  await loadDrivers();
-  return true;
-}
-
+  
 /* LOGOUT */
 async function logout() {
   const { error } = await db.auth.signOut();
