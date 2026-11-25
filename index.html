@@ -251,11 +251,7 @@ th { background: #f3f6f5; }
           <input id="tamu_menginap_di">
         </div>
 
-        <div>
-          <label>Status Driver</label>
-          <input id="status" placeholder="Contoh: Aktif">
-        </div>
-
+        
       </div>
 
       <div class="actions">
@@ -294,13 +290,12 @@ th { background: #f3f6f5; }
             <th>Kabupaten</th>
             <th>Kendaraan</th>
             <th>Plat</th>
-            <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
 
         <tbody id="driverRows">
-          <tr><td colspan="8">Belum ada data.</td></tr>
+          <tr><td colspan="7">Belum ada data.</td></tr>
         </tbody>
       </table>
     </div>
@@ -408,7 +403,7 @@ async function loadDrivers() {
 
   const { data, error } = await db
     .from("drivers")
-    .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,jumlah_tamu,asal_tamu,tamu_menginap_di,status,created_at")
+    .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,jumlah_tamu,asal_tamu,tamu_menginap_di,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -466,7 +461,7 @@ function renderDrivers() {
         <td>${escapeHTML(d.kabupaten)}</td>
         <td>${escapeHTML(d.vehicle_type)}</td>
         <td>${escapeHTML(d.plate_no)}</td>
-        <td>${escapeHTML(d.status)}</td>
+     
         <td>
           <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
           <button class="danger" onclick="deleteDriver('${d.id}')">Hapus</button>
@@ -494,8 +489,7 @@ function getFormData() {
     license_no: document.getElementById("sim").value.trim(),
     jumlah_tamu: jumlah === "" ? null : Number(jumlah),
     asal_tamu: document.getElementById("asal_tamu").value.trim(),
-    tamu_menginap_di: document.getElementById("tamu_menginap_di").value.trim(),
-    status: document.getElementById("status").value.trim()
+    tamu_menginap_di: document.getElementById("tamu_menginap_di").value.trim()
   };
 }
 
