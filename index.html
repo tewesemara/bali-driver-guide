@@ -532,20 +532,6 @@ th { background: #f3f6f5; }
               <input id="sim">
             </div>
 
-            <div>
-              <label>Jumlah Tamu</label>
-              <input id="jumlah_tamu" type="number" min="0">
-            </div>
-
-            <div>
-              <label>Asal Tamu</label>
-              <input id="asal_tamu">
-            </div>
-
-            <div>
-              <label>Tamu Menginap Di</label>
-              <input id="tamu_menginap_di">
-            </div>
 
           </div>
 
@@ -951,7 +937,7 @@ async function loadDrivers() {
 
   const { data, error } = await db
     .from("drivers")
-    .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,jumlah_tamu,asal_tamu,tamu_menginap_di,created_at")
+ .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -1039,9 +1025,8 @@ function renderDrivers() {
 
 /* MENGAMBIL DATA FORM */
 
-function getFormData() {
-  const jumlah = document.getElementById("jumlah_tamu").value;
 
+function getFormData() {
   return {
     name: document.getElementById("nama").value.trim(),
     phone: document.getElementById("whatsapp").value.trim(),
@@ -1049,10 +1034,7 @@ function getFormData() {
     address: document.getElementById("alamat").value.trim(),
     vehicle_type: document.getElementById("kendaraan").value.trim(),
     plate_no: document.getElementById("plat").value.trim(),
-    license_no: document.getElementById("sim").value.trim(),
-    jumlah_tamu: jumlah === "" ? null : Number(jumlah),
-    asal_tamu: document.getElementById("asal_tamu").value.trim(),
-    tamu_menginap_di: document.getElementById("tamu_menginap_di").value.trim()
+    license_no: document.getElementById("sim").value.trim()
   };
 }
 
@@ -1119,22 +1101,20 @@ function editDriver(id) {
 
   document.getElementById("driverId").value = d.id;
 
-  const fields = {
-    nama: d.name,
-    whatsapp: d.phone,
-    kabupaten: d.kabupaten,
-    alamat: d.address,
-    kendaraan: d.vehicle_type,
-    plat: d.plate_no,
-    sim: d.license_no,
-    jumlah_tamu: d.jumlah_tamu,
-    asal_tamu: d.asal_tamu,
-    tamu_menginap_di: d.tamu_menginap_di
-  };
+  
+const fields = {
+  nama: d.name,
+  whatsapp: d.phone,
+  kabupaten: d.kabupaten,
+  alamat: d.address,
+  kendaraan: d.vehicle_type,
+  plat: d.plate_no,
+  sim: d.license_no
+};
 
-  Object.entries(fields).forEach(function(entry) {
-    document.getElementById(entry[0]).value = entry[1] ?? "";
-  });
+Object.entries(fields).forEach(function(entry) {
+  document.getElementById(entry[0]).value = entry[1] ?? "";
+});
 
   document.getElementById("formTitle").textContent = "Edit Data Driver";
 
@@ -1211,18 +1191,17 @@ async function handleExcelFile(event) {
       return;
     }
 
-    const kolom = {
-      "Nama Driver": "name",
-      "WhatsApp": "phone",
-      "Kabupaten/Kota": "kabupaten",
-      "Alamat": "address",
-      "Jenis Kendaraan": "vehicle_type",
-      "Nomor Polisi": "plate_no",
-      "Nomor SIM": "license_no",
-      "Jumlah Tamu": "jumlah_tamu",
-      "Asal Tamu": "asal_tamu",
-      "Tamu Menginap Di": "tamu_menginap_di"
-    };
+    
+const kolom = {
+  "Nama Driver": "name",
+  "WhatsApp": "phone",
+  "Kabupaten/Kota": "kabupaten",
+  "Alamat": "address",
+  "Jenis Kendaraan": "vehicle_type",
+  "Nomor Polisi": "plate_no",
+  "Nomor SIM": "license_no"
+};
+
 
     const hasil = rows.map(function(row) {
       const record = {};
@@ -1234,11 +1213,7 @@ async function handleExcelFile(event) {
       record.name = String(record.name).trim();
       record.phone = String(record.phone).trim();
 
-      record.jumlah_tamu =
-        record.jumlah_tamu === ""
-          ? null
-          : Number(record.jumlah_tamu);
-
+    
       return record;
     });
 
