@@ -91,9 +91,20 @@ th{background:#f5f7f8;color:#42534e}
         <input id="whatsapp" placeholder="Contoh: 628123456789">
       </div>
       <div>
-        <label>Kabupaten</label>
-        <input id="kabupaten" placeholder="Kabupaten / Kota">
-      </div>
+  <label>Kabupaten / Kota</label>
+  <select id="kabupaten">
+    <option value="">Pilih Kabupaten / Kota</option>
+    <option value="Badung">Kabupaten Badung</option>
+    <option value="Bangli">Kabupaten Bangli</option>
+    <option value="Buleleng">Kabupaten Buleleng</option>
+    <option value="Gianyar">Kabupaten Gianyar</option>
+    <option value="Jembrana">Kabupaten Jembrana</option>
+    <option value="Karangasem">Kabupaten Karangasem</option>
+    <option value="Klungkung">Kabupaten Klungkung</option>
+    <option value="Tabanan">Kabupaten Tabanan</option>
+    <option value="Denpasar">Kota Denpasar</option>
+  </select>
+</div>
       <div>
         <label>Alamat</label>
         <input id="alamat" placeholder="Alamat driver">
@@ -348,10 +359,39 @@ async function saveDriver() {
   const record = getFormData();
   const id = document.getElementById("driverId").value;
 
-  if (!record.nama || !record.whatsapp) {
+  if (!record.name || !record.phone) {
     message("formMessage", "Nama dan WhatsApp wajib diisi.", "error");
     return;
   }
+
+  message("formMessage", "Menyimpan data...");
+
+  let result;
+
+  if (id) {
+    result = await db
+      .from("drivers")
+      .update(record)
+      .eq("id", id);
+  } else {
+    result = await db
+      .from("drivers")
+      .insert([record]);
+  }
+
+  if (result.error) {
+    message("formMessage", "Gagal menyimpan data: " + result.error.message, "error");
+    return;
+  }
+
+  message("formMessage", "Data driver berhasil disimpan.", "success");
+
+  document.getElementById("driverId").value = "";
+  document.getElementById("form").reset();
+  document.getElementById("formTitle").textContent = "Tambah Data Driver";
+
+  await loadDrivers();
+}
 
   message("formMessage", "Menyimpan data...");
   let result;
