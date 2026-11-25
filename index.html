@@ -283,25 +283,7 @@ function renderDrivers() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((d, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td>${escapeHTML(d.name)}</td>
-      <td>${escapeHTML(d.phone)}</td>
-      <td>${escapeHTML(d.kabupaten)}</td>
-      <td>${escapeHTML(d.vehicle_type)}</td>
-      <td>${escapeHTML(d.plate_no)}</td>
-      <td>${escapeHTML(d.status)}</td>
-      <td>
-        <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
-        <button class="danger" onclick="deleteDriver('${d.id}')">Hapus</button>
-      </td>
-    </tr>
-  `).join("");
-
-  message("listMessage", "Menampilkan " + filtered.length + " dari " + drivers.length + " data.");
-}
-
+  
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
@@ -324,63 +306,6 @@ function getFormData() {
     tamu_menginap_di: document.getElementById("tamu_menginap_di").value.trim(),
     status: document.getElementById("status").value.trim()
   };
-}
-
-async function saveDriver() {
-  const record = getFormData();
-  const id = document.getElementById("driverId").value;
-
-  if (!record.name || !record.phone) {
-    message("formMessage", "Nama dan WhatsApp wajib diisi.", "error");
-    return;
-  }
-
-  message("formMessage", "Menyimpan data...");
-
-  let result;
-
-  if (id) {
-    result = await db
-      .from("drivers")
-      .update(record)
-      .eq("id", id);
-  } else {
-    result = await db
-      .from("drivers")
-      .insert([record]);
-  }
-
-  if (result.error) {
-    message("formMessage", "Gagal menyimpan data: " + result.error.message, "error");
-    return;
-  }
-
-  message("formMessage", "Data driver berhasil disimpan.", "success");
-
-  document.getElementById("driverId").value = "";
-  document.getElementById("form").reset();
-  document.getElementById("formTitle").textContent = "Tambah Data Driver";
-
-  await loadDrivers();
-}
-
-  message("formMessage", "Menyimpan data...");
-  let result;
-
-  if (id) {
-    result = await db.from("drivers").update(record).eq("id", id);
-  } else {
-    result = await db.from("drivers").insert([record]);
-  }
-
-  if (result.error) {
-    message("formMessage", "Gagal menyimpan: " + result.error.message, "error");
-    return;
-  }
-
-  message("formMessage", "Data berhasil disimpan.", "success");
-  resetForm();
-  await loadDrivers();
 }
 
 function editDriver(id) {
