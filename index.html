@@ -4,9 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bali Driver & Guide - Admin</title>
+<title>Bali Driver & Guide - Owner Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 * { box-sizing: border-box; }
@@ -21,16 +22,16 @@ body {
 header {
   background: #123b35;
   color: white;
-  padding: 20px;
+  padding: 22px 25px;
 }
 
 header h2 { margin: 0; }
 header p { margin: 7px 0 0; color: #d5e5df; }
 
 .container {
-  max-width: 1150px;
+  max-width: 1250px;
   margin: 25px auto;
-  padding: 0 15px;
+  padding: 0 18px;
 }
 
 .card {
@@ -41,7 +42,10 @@ header p { margin: 7px 0 0; color: #d5e5df; }
   box-shadow: 0 3px 14px #0000000c;
 }
 
-h3 { color: #174c40; margin-top: 0; }
+h3 {
+  color: #174c40;
+  margin-top: 0;
+}
 
 label {
   display: block;
@@ -56,6 +60,12 @@ input, select {
   border: 1px solid #ccd5d1;
   border-radius: 7px;
   font-size: 14px;
+  background: white;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #176b50;
 }
 
 button {
@@ -66,7 +76,10 @@ button {
   font-weight: bold;
 }
 
-button:disabled { opacity: .6; cursor: wait; }
+button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
 
 .primary { background: #176b50; color: white; }
 .secondary { background: #e8edf0; color: #263238; }
@@ -93,7 +106,11 @@ button:disabled { opacity: .6; cursor: wait; }
   padding: 15px;
 }
 
-.message { margin-top: 12px; font-size: 14px; }
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
 .success { color: #137547; }
 .error { color: #b83232; }
 
@@ -105,12 +122,40 @@ button:disabled { opacity: .6; cursor: wait; }
   flex-wrap: wrap;
 }
 
-.small { font-size: 12px; color: #68757b; }
+.small {
+  font-size: 12px;
+  color: #68757b;
+}
 
-#total {
-  font-size: 28px;
+/* DASHBOARD OWNER */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 14px #0000000c;
+  border-left: 4px solid #176b50;
+}
+
+.stat-label {
+  color: #68757b;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.stat-value {
+  font-size: 25px;
   font-weight: bold;
   color: #176b50;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
 }
 
 .table-wrap { overflow-x: auto; }
@@ -130,9 +175,18 @@ th, td {
 
 th { background: #f3f6f5; }
 
+@media(max-width: 850px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media(max-width:650px) {
   .grid { grid-template-columns: 1fr; }
   .card { padding: 16px; }
+  header { padding: 18px; }
+  .stat-card { padding: 15px; }
+  .stat-value { font-size: 21px; }
 }
 </style>
 </head>
@@ -141,16 +195,17 @@ th { background: #f3f6f5; }
 
 <header>
   <h2>Bali Driver & Guide</h2>
-  <p>Dashboard Administrasi Driver</p>
+  <p>Owner Dashboard - Sistem Administrasi</p>
 </header>
 
-<!-- LOGIN ADMIN -->
+<!-- LOGIN OWNER -->
+
 <div id="loginPage" class="login">
   <div class="card">
-    <h3>Login Admin</h3>
+    <h3>Login Owner</h3>
 
-    <label>Email Admin</label>
-    <input id="email" type="email" placeholder="Masukkan email Admin">
+    <label>Email</label>
+    <input id="email" type="email" placeholder="Masukkan email Owner">
 
     <label>Password</label>
     <input id="password" type="password" placeholder="Masukkan password">
@@ -165,23 +220,49 @@ th { background: #f3f6f5; }
   </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD OWNER -->
+
 <div id="dashboard" class="container hidden">
 
   <div class="card topbar">
     <div>
-      <h3 style="margin:0">Dashboard Admin</h3>
+      <h3 style="margin:0">Dashboard Owner</h3>
       <div id="adminEmail" class="small"></div>
     </div>
+
     <button id="logoutButton" class="danger">KELUAR</button>
   </div>
 
-  <div class="card">
-    <div class="small">JUMLAH DATA DRIVER</div>
-    <div id="total">0</div>
+  <!-- STATISTIK -->
+
+  <div id="dashboardStats" class="stats-grid">
+
+    <div class="stat-card">
+      <div class="stat-label">TOTAL DRIVER</div>
+      <div id="total" class="stat-value">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">TOTAL MITRA</div>
+      <div id="totalPartners" class="stat-value">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">TOTAL KUNJUNGAN</div>
+      <div id="totalVisits" class="stat-value">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">TOTAL KOMISI</div>
+      <div id="totalCommission" class="stat-value">Rp 0</div>
+    </div>
+
   </div>
 
+  <div id="statsMessage" class="small" style="margin-bottom:15px"></div>
+
   <!-- FORM DRIVER -->
+
   <div class="card">
     <h3 id="formTitle">Input Data Driver</h3>
 
@@ -251,7 +332,6 @@ th { background: #f3f6f5; }
           <input id="tamu_menginap_di">
         </div>
 
-        
       </div>
 
       <div class="actions">
@@ -268,32 +348,39 @@ th { background: #f3f6f5; }
     <div id="formMessage" class="message"></div>
   </div>
 
- <!-- TABEL DRIVER -->
-<div class="card">
-  <div class="topbar">
-    <h3>Database Driver</h3>
+  <!-- DATABASE DRIVER -->
 
-    <div>
-      <button type="button" id="importButton" class="secondary">
-        IMPORT EXCEL
-      </button>
+  <div class="card">
 
-      <button id="refreshButton" class="secondary">
-        MUAT ULANG
-      </button>
+    <div class="topbar">
+      <h3>Database Driver</h3>
+
+      <div class="actions" style="margin-top:0">
+        <button type="button" id="importButton" class="secondary">
+          IMPORT EXCEL
+        </button>
+
+        <button type="button" id="refreshButton" class="secondary">
+          MUAT ULANG
+        </button>
+      </div>
     </div>
-  </div>
 
-  <input
-    type="file"
-    id="excelFile"
-    accept=".xlsx,.xls"
-    style="display:none"
-  >
-  <div id="excelPreview"></div>
+    <input
+      type="file"
+      id="excelFile"
+      accept=".xlsx,.xls"
+      style="display:none"
+    >
+
+    <div id="excelPreview"></div>
 
     <label>Cari Data Driver</label>
-    <input id="search" placeholder="Cari nama, WhatsApp, kabupaten, kendaraan, plat...">
+
+    <input
+      id="search"
+      placeholder="Cari nama, WhatsApp, kabupaten, kendaraan, plat..."
+    >
 
     <div id="listMessage" class="small" style="margin:12px 0"></div>
 
@@ -316,15 +403,15 @@ th { background: #f3f6f5; }
         </tbody>
       </table>
     </div>
+
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <script>
+<script>
 "use strict";
 
 /* KONEKSI SUPABASE */
+
 const SUPABASE_URL = "https://wssbbcygkikepyhzudvf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_22gvj7q_JkIRTvCiUAUooQ_XSHdKUeq";
 
@@ -334,15 +421,28 @@ const db = window.supabase.createClient(
 );
 
 let drivers = [];
+window.currentRole = null;
 
 /* PESAN */
+
 function message(id, text, type = "") {
   const el = document.getElementById(id);
   el.className = "message " + type;
   el.textContent = text;
 }
 
+/* FORMAT RUPIAH */
+
+function formatRupiah(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
+
 /* LOGIN */
+
 async function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -377,8 +477,8 @@ async function login() {
   }
 }
 
+/* CEK HAK AKSES OWNER */
 
-/* CEK HAK AKSES OWNER, ADMIN, DAN USER */
 async function checkAdmin(user) {
   const { data, error } = await db
     .from("profiles")
@@ -386,16 +486,16 @@ async function checkAdmin(user) {
     .eq("id", user.id)
     .single();
 
-  const allowedRoles = ["owner", "admin", "user"];
-
-  if (error || !data || !allowedRoles.includes(data.role)) {
+  if (error || !data || data.role !== "owner") {
     document.getElementById("dashboard").classList.add("hidden");
     document.getElementById("loginPage").classList.remove("hidden");
+
     message(
       "loginMessage",
-      "Akun tidak memiliki hak akses.",
+      "Akses ditolak. Halaman ini khusus untuk Owner.",
       "error"
     );
+
     return false;
   }
 
@@ -403,14 +503,73 @@ async function checkAdmin(user) {
 
   document.getElementById("loginPage").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
+
   document.getElementById("adminEmail").textContent =
-    (user.email || "") + " (" + data.role.toUpperCase() + ")";
+    (user.email || "") + " (OWNER)";
 
   await loadDrivers();
+  await loadDashboardStats();
+
   return true;
 }
-  
+
+/* MEMUAT STATISTIK DASHBOARD OWNER */
+
+async function loadDashboardStats() {
+  if (window.currentRole !== "owner") return;
+
+  const statsMessage = document.getElementById("statsMessage");
+  statsMessage.textContent = "Memuat statistik dashboard...";
+
+  try {
+    const [partners, visits, commissions] = await Promise.all([
+
+      db
+        .from("partners")
+        .select("id", { count: "exact", head: true }),
+
+      db
+        .from("visits")
+        .select("id", { count: "exact", head: true }),
+
+      db
+        .from("commission_records")
+        .select("amount")
+
+    ]);
+
+    if (partners.error) throw partners.error;
+    if (visits.error) throw visits.error;
+    if (commissions.error) throw commissions.error;
+
+    document.getElementById("totalPartners").textContent =
+      partners.count ?? 0;
+
+    document.getElementById("totalVisits").textContent =
+      visits.count ?? 0;
+
+    const totalCommission = (commissions.data || []).reduce(
+      function(sum, item) {
+        return sum + Number(item.amount || 0);
+      },
+      0
+    );
+
+    document.getElementById("totalCommission").textContent =
+      formatRupiah(totalCommission);
+
+    statsMessage.textContent = "Statistik berhasil diperbarui.";
+
+  } catch (error) {
+    console.error("Gagal memuat statistik:", error);
+
+    statsMessage.textContent =
+      "Sebagian statistik belum dapat dimuat: " + error.message;
+  }
+}
+
 /* LOGOUT */
+
 async function logout() {
   const { error } = await db.auth.signOut();
 
@@ -420,14 +579,23 @@ async function logout() {
   }
 
   drivers = [];
+  window.currentRole = null;
+
   document.getElementById("dashboard").classList.add("hidden");
   document.getElementById("loginPage").classList.remove("hidden");
   document.getElementById("password").value = "";
+
+  document.getElementById("driverRows").innerHTML =
+    '<tr><td colspan="7">Belum ada data.</td></tr>';
+
   message("loginMessage", "Anda sudah keluar.", "success");
 }
 
 /* MEMUAT DATA DRIVER */
+
 async function loadDrivers() {
+  if (window.currentRole !== "owner") return;
+
   message("listMessage", "Memuat data driver...");
 
   const { data, error } = await db
@@ -441,11 +609,14 @@ async function loadDrivers() {
   }
 
   drivers = data || [];
+
   document.getElementById("total").textContent = drivers.length;
+
   renderDrivers();
 }
 
 /* AMANKAN TEKS TABEL */
+
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, function(c) {
     return {
@@ -458,7 +629,8 @@ function escapeHTML(value) {
   });
 }
 
-/* MENAMPILKAN TABEL */
+/* MENAMPILKAN TABEL DRIVER */
+
 function renderDrivers() {
   const keyword = document.getElementById("search").value.toLowerCase().trim();
 
@@ -478,6 +650,12 @@ function renderDrivers() {
 
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7">Data tidak ditemukan.</td></tr>';
+
+    message(
+      "listMessage",
+      "Tidak ada data yang cocok dengan pencarian."
+    );
+
     return;
   }
 
@@ -490,21 +668,26 @@ function renderDrivers() {
         <td>${escapeHTML(d.kabupaten)}</td>
         <td>${escapeHTML(d.vehicle_type)}</td>
         <td>${escapeHTML(d.plate_no)}</td>
-     
         <td>
-          <button class="secondary" onclick="editDriver('${d.id}')">Edit</button>
-          <button class="danger" onclick="deleteDriver('${d.id}')">Hapus</button>
+          <button class="secondary" onclick="editDriver('${d.id}')">
+            Edit
+          </button>
+          <button class="danger" onclick="deleteDriver('${d.id}')">
+            Hapus
+          </button>
         </td>
       </tr>
     `;
   }).join("");
 
-  message("listMessage",
+  message(
+    "listMessage",
     "Menampilkan " + filtered.length + " dari " + drivers.length + " data."
   );
 }
 
 /* MENGAMBIL DATA FORM */
+
 function getFormData() {
   const jumlah = document.getElementById("jumlah_tamu").value;
 
@@ -523,8 +706,14 @@ function getFormData() {
 }
 
 /* SIMPAN DATA BARU ATAU EDIT */
+
 async function saveDriver(event) {
   event.preventDefault();
+
+  if (window.currentRole !== "owner") {
+    message("formMessage", "Akses tidak diizinkan.", "error");
+    return;
+  }
 
   const record = getFormData();
   const id = document.getElementById("driverId").value;
@@ -555,6 +744,7 @@ async function saveDriver(event) {
     if (result.error) throw result.error;
 
     message("formMessage", "Data driver berhasil disimpan.", "success");
+
     resetForm();
     await loadDrivers();
 
@@ -566,7 +756,10 @@ async function saveDriver(event) {
 }
 
 /* EDIT DRIVER */
+
 function editDriver(id) {
+  if (window.currentRole !== "owner") return;
+
   const d = drivers.find(function(item) {
     return String(item.id) === String(id);
   });
@@ -585,8 +778,7 @@ function editDriver(id) {
     sim: d.license_no,
     jumlah_tamu: d.jumlah_tamu,
     asal_tamu: d.asal_tamu,
-    tamu_menginap_di: d.tamu_menginap_di,
-   
+    tamu_menginap_di: d.tamu_menginap_di
   };
 
   Object.entries(fields).forEach(function(entry) {
@@ -594,12 +786,17 @@ function editDriver(id) {
   });
 
   document.getElementById("formTitle").textContent = "Edit Data Driver";
+
   message("formMessage", "Anda sedang mengedit data driver.");
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /* HAPUS DRIVER */
+
 async function deleteDriver(id) {
+  if (window.currentRole !== "owner") return;
+
   const d = drivers.find(function(item) {
     return String(item.id) === String(id);
   });
@@ -621,24 +818,30 @@ async function deleteDriver(id) {
   }
 
   message("listMessage", "Data driver berhasil dihapus.", "success");
+
   await loadDrivers();
 }
 
 /* KOSONGKAN FORM */
+
 function resetForm() {
   document.getElementById("driverForm").reset();
   document.getElementById("driverId").value = "";
   document.getElementById("formTitle").textContent = "Input Data Driver";
   document.getElementById("formMessage").textContent = "";
 }
+
 /* MEMBACA FILE EXCEL */
+
 async function handleExcelFile(event) {
+  if (window.currentRole !== "owner") return;
+
   const file = event.target.files[0];
 
   if (!file) return;
 
   const preview = document.getElementById("excelPreview");
-  preview.innerHTML = "Sedang membaca file Excel...";
+  preview.textContent = "Sedang membaca file Excel...";
 
   try {
     const data = await file.arrayBuffer();
@@ -651,7 +854,7 @@ async function handleExcelFile(event) {
     });
 
     if (!rows.length) {
-      preview.innerHTML = "File Excel tidak berisi data.";
+      preview.textContent = "File Excel tidak berisi data.";
       return;
     }
 
@@ -691,7 +894,7 @@ async function handleExcelFile(event) {
     });
 
     if (kosong.length) {
-      preview.innerHTML =
+      preview.textContent =
         "Ada " + kosong.length +
         " baris tanpa Nama Driver atau WhatsApp. Periksa file Excel Anda.";
       return;
@@ -703,18 +906,24 @@ async function handleExcelFile(event) {
       "<h3>Pratinjau Excel</h3>" +
       "<p>Jumlah data: " + hasil.length + "</p>" +
       "<p>File berhasil dibaca.</p>" +
-"<button type='button' onclick='confirmExcelImport()'>MULAI IMPORT KE DATABASE</button>";
-    
+      "<button type='button' class='primary' onclick='confirmExcelImport()'>" +
+      "MULAI IMPORT KE DATABASE</button>";
+
   } catch (error) {
     console.error(error);
-    preview.innerHTML =
+
+    preview.textContent =
       "Gagal membaca Excel. Pastikan file berformat .xlsx atau .xls.";
   }
 
   event.target.value = "";
 }
-  /* PROSES IMPORT DAN PEMERIKSAAN DUPLIKAT */
+
+/* PROSES IMPORT DAN PEMERIKSAAN DUPLIKAT */
+
 async function confirmExcelImport() {
+  if (window.currentRole !== "owner") return;
+
   const data = window.excelImportData || [];
 
   if (!data.length) {
@@ -727,6 +936,7 @@ async function confirmExcelImport() {
   }
 
   const knownDrivers = [...drivers];
+
   let inserted = 0;
   let updated = 0;
   let skipped = 0;
@@ -760,8 +970,6 @@ async function confirmExcelImport() {
         continue;
       }
 
-      duplicate.name = record.name;
-      duplicate.phone = record.phone;
       Object.assign(duplicate, record);
       updated++;
 
@@ -792,28 +1000,42 @@ async function confirmExcelImport() {
     "<p>Data diperbarui: " + updated + "</p>" +
     "<p>Data dilewati: " + skipped + "</p>";
 }
-    
+
 /* HUBUNGKAN TOMBOL */
-document.getElementById("loginButton").addEventListener("click", login);
 
-document.getElementById("logoutButton").addEventListener("click", logout);
+document.getElementById("loginButton")
+  .addEventListener("click", login);
 
-document.getElementById("driverForm").addEventListener("submit", saveDriver);
+document.getElementById("logoutButton")
+  .addEventListener("click", logout);
 
-document.getElementById("resetButton").addEventListener("click", resetForm);
+document.getElementById("driverForm")
+  .addEventListener("submit", saveDriver);
 
-document.getElementById("refreshButton").addEventListener("click", loadDrivers);
+document.getElementById("resetButton")
+  .addEventListener("click", resetForm);
 
-document.getElementById("search").addEventListener("input", renderDrivers);
-    
-    /* IMPORT EXCEL */
-document.getElementById("importButton").addEventListener("click", function() {
-  document.getElementById("excelFile").click();
-});
+document.getElementById("refreshButton")
+  .addEventListener("click", async function() {
+    await loadDrivers();
+    await loadDashboardStats();
+  });
 
-document.getElementById("excelFile").addEventListener("change", handleExcelFile);
+document.getElementById("search")
+  .addEventListener("input", renderDrivers);
+
+/* IMPORT EXCEL */
+
+document.getElementById("importButton")
+  .addEventListener("click", function() {
+    document.getElementById("excelFile").click();
+  });
+
+document.getElementById("excelFile")
+  .addEventListener("change", handleExcelFile);
 
 /* PERIKSA SESSION SAAT HALAMAN DIBUKA */
+
 async function startApp() {
   try {
     const { data, error } = await db.auth.getSession();
@@ -823,12 +1045,18 @@ async function startApp() {
     if (data.session) {
       await checkAdmin(data.session.user);
     }
+
   } catch (error) {
-    message("loginMessage", "Gagal memeriksa sesi: " + error.message, "error");
+    message(
+      "loginMessage",
+      "Gagal memeriksa sesi: " + error.message,
+      "error"
+    );
   }
 }
 
 startApp();
+
 </script>
 
 </body>
