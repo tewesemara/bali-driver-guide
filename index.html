@@ -377,7 +377,8 @@ async function login() {
   }
 }
 
-/* CEK HAK AKSES ADMIN */
+
+/* CEK HAK AKSES OWNER, ADMIN, DAN USER */
 async function checkAdmin(user) {
   const { data, error } = await db
     .from("profiles")
@@ -385,13 +386,29 @@ async function checkAdmin(user) {
     .eq("id", user.id)
     .single();
 
-  if (error || !data || data.role !== "admin") {
+  const allowedRoles = ["owner", "admin", "user"];
+
+  if (error || !data || !allowedRoles.includes(data.role)) {
     document.getElementById("dashboard").classList.add("hidden");
     document.getElementById("loginPage").classList.remove("hidden");
-    message("loginMessage", "Akun ini tidak memiliki akses Admin.", "error");
+    message(
+      "loginMessage",
+      "Akun tidak memiliki hak akses.",
+      "error"
+    );
     return false;
   }
 
+  window.currentRole = data.role;
+
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("adminEmail").textContent =
+    (user.email || "") + " (" + data.role.toUpperCase() + ")";
+
+  await loadDrivers();
+  return true;
+}
   document.getElementById("loginPage").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
   document.getElementById("adminEmail").textContent = user.email || "";
