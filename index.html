@@ -877,6 +877,7 @@ async function login() {
    AUTENTIKASI LOGIN DAN PENDAFTARAN
 ===================================== */
 
+
 /* TAMPILAN LOGIN */
 
 function showLoginForm() {
@@ -890,7 +891,7 @@ function showLoginForm() {
   message("loginMessage", "");
 }
 
-/* TAMPILAN DAFTAR */
+/* TAMPILAN PENDAFTARAN */
 
 function showSignupForm() {
   document.getElementById("authTitle").textContent = "Daftar Akun";
@@ -900,6 +901,7 @@ function showSignupForm() {
   document.getElementById("forgotPasswordButton").classList.add("hidden");
   document.getElementById("passwordRecoveryFields").classList.add("hidden");
 
+  toggleMitraFields();
   message("loginMessage", "");
 }
 
@@ -984,9 +986,7 @@ async function signup() {
       });
 
       if (partnerError) {
-        throw new Error(
-          "Pendaftaran Mitra gagal: " + partnerError.message
-        );
+        throw new Error("Pendaftaran Mitra gagal: " + partnerError.message);
       }
     }
 
@@ -1002,8 +1002,8 @@ async function signup() {
     message(
       "loginMessage",
       role === "mitra"
-        ? "Pendaftaran Mitra berhasil dikirim. Menunggu persetujuan Owner."
-        : "Pendaftaran Driver berhasil. Silakan login.",
+        ? "Pendaftaran Mitra berhasil dikirim. Silakan menunggu persetujuan Owner."
+        : "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
       "success"
     );
 
@@ -1047,7 +1047,20 @@ async function forgotPassword() {
   }
 }
 
-/* FORM PASSWORD BARU */
+/* TAMPILKAN FORM PASSWORD BARU */
+
+function showRecoveryForm() {
+  document.getElementById("authTitle").textContent = "Buat Password Baru";
+  document.getElementById("signupFields").classList.add("hidden");
+  document.getElementById("loginButton").classList.add("hidden");
+  document.getElementById("signupButton").classList.add("hidden");
+  document.getElementById("forgotPasswordButton").classList.add("hidden");
+  document.getElementById("passwordRecoveryFields").classList.remove("hidden");
+
+  message("loginMessage", "");
+}
+
+/* SIMPAN PASSWORD BARU */
 
 async function saveNewPassword() {
   const password = document.getElementById("recoveryPassword").value;
@@ -1078,10 +1091,10 @@ async function saveNewPassword() {
 
     if (error) throw error;
 
-    await db.auth.signOut();
-
     document.getElementById("recoveryPassword").value = "";
     document.getElementById("recoveryPasswordConfirm").value = "";
+
+    await db.auth.signOut();
 
     showLoginForm();
 
@@ -1103,19 +1116,6 @@ async function saveNewPassword() {
   }
 }
 
-/* TAMPILKAN FORM PASSWORD BARU */
-
-function showRecoveryForm() {
-  document.getElementById("authTitle").textContent = "Buat Password Baru";
-  document.getElementById("signupFields").classList.add("hidden");
-  document.getElementById("loginButton").classList.add("hidden");
-  document.getElementById("signupButton").classList.add("hidden");
-  document.getElementById("forgotPasswordButton").classList.add("hidden");
-  document.getElementById("passwordRecoveryFields").classList.remove("hidden");
-
-  message("loginMessage", "");
-}
-
 /* DETEKSI PEMULIHAN PASSWORD */
 
 window.passwordRecoveryMode = false;
@@ -1126,115 +1126,6 @@ db.auth.onAuthStateChange((event, session) => {
     showRecoveryForm();
   }
 });
-
-    await db.auth.signOut();
-    signupSessionCreated = false;
-
-    document.getElementById("password").value = "";
-    document.getElementById("signupName").value = "";
-    document.getElementById("mitraName").value = "";
-
-    showLoginForm();
-
-    message(
-      "loginMessage",
-      role === "mitra"
-        ? "Pendaftaran Mitra berhasil dikirim. Silakan menunggu persetujuan Owner."
-        : "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
-      "success"
-    );
-
-  } catch (error) {
-    message(
-      "loginMessage",
-      "Pendaftaran gagal: " + error.message,
-      "error"
-    );
-  } finally {
-    if (signupSessionCreated) {
-      await db.auth.signOut();
-    }
-
-    button.disabled = false;
-  }
-}
-
-
-/* SIMPAN PASSWORD BARU */
-
-async function saveNewPassword() {
-  const password = document.getElementById("recoveryPassword").value;
-  const confirmPassword = document.getElementById("recoveryPasswordConfirm").value;
-
-  if (!password || !confirmPassword) {
-    message("loginMessage", "Kedua kolom password wajib diisi.", "error");
-    return;
-  }
-
-  if (password.length < 6) {
-    message("loginMessage", "Password minimal 6 karakter.", "error");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    message("loginMessage", "Konfirmasi password tidak sama.", "error");
-    return;
-  }
-
-  const button = document.getElementById("saveNewPasswordButton");
-  button.disabled = true;
-
-  try {
-    const { error } = await db.auth.updateUser({
-      password: password
-    });
-
-    if (error) throw error;
-
-    document.getElementById("recoveryPassword").value = "";
-    document.getElementById("recoveryPasswordConfirm").value = "";
-    document.getElementById("passwordRecoveryFields").classList.add("hidden");
-
-    await db.auth.signOut();
-
-    showLoginForm();
-
-    message("loginMessage", "Password berhasil diperbarui. Silakan login kembali.", "success");
-
-  } catch (error) {
-    message("loginMessage", "Gagal memperbarui password: " + error.message, "error");
-  } finally {
-    button.disabled = false;
-  }
-}
-
-/* LUPA PASSWORD */
-
-async function forgotPassword() {
-  const email = document.getElementById("email").value.trim();
-
-  if (!email) {
-    message("loginMessage", "Masukkan email terlebih dahulu.", "error");
-    return;
-  }
-
-  try {
-    const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://tewesemara.github.io/bali-driver-guide/"
-    });
-
-    if (error) throw error;
-
-    message(
-      "loginMessage",
-      "Permintaan reset password dikirim. Silakan periksa email.",
-      "success"
-    );
-
-  } catch (error) {
-    message("loginMessage", "Gagal mengirim email: " + error.message, "error");
-  }
-}
 
 /* CEK HAK AKSES OWNER */
 
@@ -1822,6 +1713,13 @@ async function startApp() {
 
     if (error) throw error;
 
+    // Jika sedang dalam proses pemulihan password,
+    // jangan jalankan pemeriksaan login Owner.
+    if (window.passwordRecoveryMode) {
+      showRecoveryForm();
+      return;
+    }
+
     if (data.session) {
       await checkAdmin(data.session.user);
     }
@@ -1836,6 +1734,7 @@ async function startApp() {
 }
 
 startApp();
+
 
 </script>
 
