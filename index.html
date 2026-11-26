@@ -369,24 +369,16 @@ th { background: #f3f6f5; }
     </div>
 
    
+
 <div id="signupFields" class="hidden">
   <label>Nama Lengkap</label>
   <input id="signupName" type="text"
     placeholder="Masukkan nama lengkap">
 
-  <label>Daftar Sebagai</label>
-  <select id="signupRole">
-    <option value="driver">Driver</option>
-    <option value="mitra">Mitra</option>
-  </select>
-
-  <div id="mitraFields" class="hidden">
-    <label>Nama Usaha / Objek Wisata</label>
-    <input id="mitraName" type="text"
-      placeholder="Masukkan nama usaha atau objek wisata">
-  </div>
+  <label>Konfirmasi Password</label>
+  <input id="confirmPassword" type="password"
+    placeholder="Ulangi password">
 </div>
-
 
     <div class="actions" style="margin-top:15px">
       <button id="loginButton" class="primary"
@@ -891,28 +883,21 @@ function showLoginForm() {
   message("loginMessage", "");
 }
 
+
 /* TAMPILAN PENDAFTARAN */
 
 function showSignupForm() {
-  document.getElementById("authTitle").textContent = "Daftar Akun";
+  document.getElementById("authTitle").textContent = "Daftar Akun Driver";
   document.getElementById("signupFields").classList.remove("hidden");
   document.getElementById("loginButton").classList.add("hidden");
   document.getElementById("signupButton").classList.remove("hidden");
   document.getElementById("forgotPasswordButton").classList.add("hidden");
   document.getElementById("passwordRecoveryFields").classList.add("hidden");
 
-  toggleMitraFields();
   message("loginMessage", "");
 }
 
-/* PILIHAN MITRA */
 
-function toggleMitraFields() {
-  const role = document.getElementById("signupRole").value;
-
-  document.getElementById("mitraFields")
-    .classList.toggle("hidden", role !== "mitra");
-}
 
 /* TAMPILKAN PASSWORD */
 
@@ -923,18 +908,22 @@ function togglePasswordVisibility() {
     password.type === "password" ? "text" : "password";
 }
 
-/* PENDAFTARAN DRIVER DAN MITRA */
+
+/* PENDAFTARAN DRIVER */
 
 async function signup() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
   const fullName = document.getElementById("signupName").value.trim();
-  const role = document.getElementById("signupRole").value;
-  const mitraName = document.getElementById("mitraName").value.trim();
   const button = document.getElementById("signupButton");
 
-  if (!email || !password || !fullName) {
-    message("loginMessage", "Nama, email, dan password wajib diisi.", "error");
+  if (!email || !password || !confirmPassword || !fullName) {
+    message(
+      "loginMessage",
+      "Nama, email, password, dan konfirmasi password wajib diisi.",
+      "error"
+    );
     return;
   }
 
@@ -943,13 +932,17 @@ async function signup() {
     return;
   }
 
-  if (role === "mitra" && !mitraName) {
-    message("loginMessage", "Nama usaha atau objek wisata wajib diisi.", "error");
+  if (password !== confirmPassword) {
+    message(
+      "loginMessage",
+      "Password dan konfirmasi password tidak sama.",
+      "error"
+    );
     return;
   }
 
   button.disabled = true;
-  message("loginMessage", "Sedang membuat akun...");
+  message("loginMessage", "Sedang membuat akun Driver...");
 
   let signupSessionCreated = false;
 
@@ -978,37 +971,27 @@ async function signup() {
       );
     }
 
-    if (role === "mitra") {
-      const { error: partnerError } = await db.rpc("register_partner", {
-        p_name: mitraName,
-        p_contact_name: fullName,
-        p_email: email
-      });
-
-      if (partnerError) {
-        throw new Error("Pendaftaran Mitra gagal: " + partnerError.message);
-      }
-    }
-
     await db.auth.signOut();
     signupSessionCreated = false;
 
     document.getElementById("password").value = "";
+    document.getElementById("confirmPassword").value = "";
     document.getElementById("signupName").value = "";
-    document.getElementById("mitraName").value = "";
 
     showLoginForm();
 
     message(
       "loginMessage",
-      role === "mitra"
-        ? "Pendaftaran Mitra berhasil dikirim. Silakan menunggu persetujuan Owner."
-        : "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
+      "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
       "success"
     );
 
   } catch (error) {
-    message("loginMessage", "Pendaftaran gagal: " + error.message, "error");
+    message(
+      "loginMessage",
+      "Pendaftaran gagal: " + error.message,
+      "error"
+    );
 
   } finally {
     if (signupSessionCreated) {
@@ -1665,9 +1648,6 @@ document.getElementById("togglePassword")
 document.getElementById("forgotPasswordButton")
   .addEventListener("click", forgotPassword);
 
-document.getElementById("signupRole")
-  .addEventListener("change", toggleMitraFields);
-  
 document.getElementById("saveNewPasswordButton")
   .addEventListener("click", saveNewPassword);
 
