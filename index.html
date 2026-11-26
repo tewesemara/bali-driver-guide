@@ -343,23 +343,84 @@ th { background: #f3f6f5; }
   <p>Owner Dashboard - Sistem Administrasi</p>
 </header>
 
-<!-- LOGIN OWNER -->
 
+<!-- HALAMAN LOGIN -->
 <div id="loginPage" class="login">
   <div class="card">
-    <h3>Login Owner</h3>
+    <h3 id="authTitle">Login</h3>
 
-    <label>Email</label>
-    <input id="email" type="email" placeholder="Masukkan email Owner">
-
-    <label>Password</label>
-    <input id="password" type="password" placeholder="Masukkan password">
-
-    <div class="actions">
-      <button id="loginButton" class="primary" style="width:100%">
-        MASUK
+    <div class="actions" style="margin-bottom:15px">
+      <button type="button" id="showLoginButton" class="primary">
+        LOGIN
+      </button>
+      <button type="button" id="showSignupButton">
+        DAFTAR
       </button>
     </div>
+
+    <label>Email</label>
+    <input id="email" type="email" placeholder="Masukkan email">
+
+    <label>Password</label>
+    <div style="display:flex;gap:8px">
+      <input id="password" type="password"
+        placeholder="Masukkan password" style="flex:1">
+      <button type="button" id="togglePassword">👁</button>
+    </div>
+
+   
+<div id="signupFields" class="hidden">
+  <label>Nama Lengkap</label>
+  <input id="signupName" type="text"
+    placeholder="Masukkan nama lengkap">
+
+  <label>Daftar Sebagai</label>
+  <select id="signupRole">
+    <option value="driver">Driver</option>
+    <option value="mitra">Mitra</option>
+  </select>
+
+  <div id="mitraFields" class="hidden">
+    <label>Nama Usaha / Objek Wisata</label>
+    <input id="mitraName" type="text"
+      placeholder="Masukkan nama usaha atau objek wisata">
+  </div>
+</div>
+
+
+    <div class="actions" style="margin-top:15px">
+      <button id="loginButton" class="primary"
+        style="width:100%">
+        MASUK
+      </button>
+      <button id="signupButton" class="primary hidden"
+        style="width:100%">
+        DAFTAR
+      </button>
+    </div>
+
+    <button type="button" id="forgotPasswordButton"
+      style="margin-top:12px">
+      Lupa Password?
+    </button>
+
+    
+<div id="passwordRecoveryFields" class="hidden">
+  <h3>Buat Password Baru</h3>
+
+  <label>Password Baru</label>
+  <input id="recoveryPassword" type="password"
+    placeholder="Masukkan password baru">
+
+  <label>Ulangi Password Baru</label>
+  <input id="recoveryPasswordConfirm" type="password"
+    placeholder="Ulangi password baru">
+
+  <button type="button" id="saveNewPasswordButton"
+    class="primary" style="width:100%;margin-top:12px">
+    SIMPAN PASSWORD BARU
+  </button>
+</div>
 
     <div id="loginMessage" class="message"></div>
   </div>
@@ -807,6 +868,371 @@ async function login() {
     message("loginMessage", "Login gagal: " + error.message, "error");
   } finally {
     button.disabled = false;
+  }
+}
+
+  
+
+/* =====================================
+   AUTENTIKASI LOGIN DAN PENDAFTARAN
+===================================== */
+
+/* TAMPILAN LOGIN */
+
+function showLoginForm() {
+  document.getElementById("authTitle").textContent = "Login";
+  document.getElementById("signupFields").classList.add("hidden");
+  document.getElementById("loginButton").classList.remove("hidden");
+  document.getElementById("signupButton").classList.add("hidden");
+  document.getElementById("forgotPasswordButton").classList.remove("hidden");
+  document.getElementById("passwordRecoveryFields").classList.add("hidden");
+
+  message("loginMessage", "");
+}
+
+/* TAMPILAN DAFTAR */
+
+function showSignupForm() {
+  document.getElementById("authTitle").textContent = "Daftar Akun";
+  document.getElementById("signupFields").classList.remove("hidden");
+  document.getElementById("loginButton").classList.add("hidden");
+  document.getElementById("signupButton").classList.remove("hidden");
+  document.getElementById("forgotPasswordButton").classList.add("hidden");
+  document.getElementById("passwordRecoveryFields").classList.add("hidden");
+
+  message("loginMessage", "");
+}
+
+/* PILIHAN MITRA */
+
+function toggleMitraFields() {
+  const role = document.getElementById("signupRole").value;
+
+  document.getElementById("mitraFields")
+    .classList.toggle("hidden", role !== "mitra");
+}
+
+/* TAMPILKAN PASSWORD */
+
+function togglePasswordVisibility() {
+  const password = document.getElementById("password");
+
+  password.type =
+    password.type === "password" ? "text" : "password";
+}
+
+/* PENDAFTARAN DRIVER DAN MITRA */
+
+async function signup() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const fullName = document.getElementById("signupName").value.trim();
+  const role = document.getElementById("signupRole").value;
+  const mitraName = document.getElementById("mitraName").value.trim();
+  const button = document.getElementById("signupButton");
+
+  if (!email || !password || !fullName) {
+    message("loginMessage", "Nama, email, dan password wajib diisi.", "error");
+    return;
+  }
+
+  if (password.length < 6) {
+    message("loginMessage", "Password minimal 6 karakter.", "error");
+    return;
+  }
+
+  if (role === "mitra" && !mitraName) {
+    message("loginMessage", "Nama usaha atau objek wisata wajib diisi.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  message("loginMessage", "Sedang membuat akun...");
+
+  let signupSessionCreated = false;
+
+  try {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    signupSessionCreated = !!data.session;
+
+    if (!data.user) {
+      throw new Error("Akun belum berhasil dibuat.");
+    }
+
+    if (!data.session) {
+      throw new Error(
+        "Sesi login belum tersedia. Periksa pengaturan konfirmasi email Supabase."
+      );
+    }
+
+    if (role === "mitra") {
+      const { error: partnerError } = await db.rpc("register_partner", {
+        p_name: mitraName,
+        p_contact_name: fullName,
+        p_email: email
+      });
+
+      if (partnerError) {
+        throw new Error(
+          "Pendaftaran Mitra gagal: " + partnerError.message
+        );
+      }
+    }
+
+    await db.auth.signOut();
+    signupSessionCreated = false;
+
+    document.getElementById("password").value = "";
+    document.getElementById("signupName").value = "";
+    document.getElementById("mitraName").value = "";
+
+    showLoginForm();
+
+    message(
+      "loginMessage",
+      role === "mitra"
+        ? "Pendaftaran Mitra berhasil dikirim. Menunggu persetujuan Owner."
+        : "Pendaftaran Driver berhasil. Silakan login.",
+      "success"
+    );
+
+  } catch (error) {
+    message("loginMessage", "Pendaftaran gagal: " + error.message, "error");
+
+  } finally {
+    if (signupSessionCreated) {
+      await db.auth.signOut();
+    }
+
+    button.disabled = false;
+  }
+}
+
+/* LUPA PASSWORD */
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    message("loginMessage", "Masukkan email terlebih dahulu.", "error");
+    return;
+  }
+
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://tewesemara.github.io/bali-driver-guide/"
+    });
+
+    if (error) throw error;
+
+    message(
+      "loginMessage",
+      "Email pemulihan password telah dikirim. Silakan periksa email.",
+      "success"
+    );
+
+  } catch (error) {
+    message("loginMessage", "Gagal mengirim email: " + error.message, "error");
+  }
+}
+
+/* FORM PASSWORD BARU */
+
+async function saveNewPassword() {
+  const password = document.getElementById("recoveryPassword").value;
+  const confirmPassword = document.getElementById("recoveryPasswordConfirm").value;
+  const button = document.getElementById("saveNewPasswordButton");
+
+  if (!password || !confirmPassword) {
+    message("loginMessage", "Kedua kolom password wajib diisi.", "error");
+    return;
+  }
+
+  if (password.length < 6) {
+    message("loginMessage", "Password minimal 6 karakter.", "error");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    message("loginMessage", "Konfirmasi password tidak sama.", "error");
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+    const { error } = await db.auth.updateUser({
+      password: password
+    });
+
+    if (error) throw error;
+
+    await db.auth.signOut();
+
+    document.getElementById("recoveryPassword").value = "";
+    document.getElementById("recoveryPasswordConfirm").value = "";
+
+    showLoginForm();
+
+    message(
+      "loginMessage",
+      "Password berhasil diperbarui. Silakan login kembali.",
+      "success"
+    );
+
+  } catch (error) {
+    message(
+      "loginMessage",
+      "Gagal memperbarui password: " + error.message,
+      "error"
+    );
+
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/* TAMPILKAN FORM PASSWORD BARU */
+
+function showRecoveryForm() {
+  document.getElementById("authTitle").textContent = "Buat Password Baru";
+  document.getElementById("signupFields").classList.add("hidden");
+  document.getElementById("loginButton").classList.add("hidden");
+  document.getElementById("signupButton").classList.add("hidden");
+  document.getElementById("forgotPasswordButton").classList.add("hidden");
+  document.getElementById("passwordRecoveryFields").classList.remove("hidden");
+
+  message("loginMessage", "");
+}
+
+/* DETEKSI PEMULIHAN PASSWORD */
+
+window.passwordRecoveryMode = false;
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    window.passwordRecoveryMode = true;
+    showRecoveryForm();
+  }
+});
+
+    await db.auth.signOut();
+    signupSessionCreated = false;
+
+    document.getElementById("password").value = "";
+    document.getElementById("signupName").value = "";
+    document.getElementById("mitraName").value = "";
+
+    showLoginForm();
+
+    message(
+      "loginMessage",
+      role === "mitra"
+        ? "Pendaftaran Mitra berhasil dikirim. Silakan menunggu persetujuan Owner."
+        : "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
+      "success"
+    );
+
+  } catch (error) {
+    message(
+      "loginMessage",
+      "Pendaftaran gagal: " + error.message,
+      "error"
+    );
+  } finally {
+    if (signupSessionCreated) {
+      await db.auth.signOut();
+    }
+
+    button.disabled = false;
+  }
+}
+
+
+/* SIMPAN PASSWORD BARU */
+
+async function saveNewPassword() {
+  const password = document.getElementById("recoveryPassword").value;
+  const confirmPassword = document.getElementById("recoveryPasswordConfirm").value;
+
+  if (!password || !confirmPassword) {
+    message("loginMessage", "Kedua kolom password wajib diisi.", "error");
+    return;
+  }
+
+  if (password.length < 6) {
+    message("loginMessage", "Password minimal 6 karakter.", "error");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    message("loginMessage", "Konfirmasi password tidak sama.", "error");
+    return;
+  }
+
+  const button = document.getElementById("saveNewPasswordButton");
+  button.disabled = true;
+
+  try {
+    const { error } = await db.auth.updateUser({
+      password: password
+    });
+
+    if (error) throw error;
+
+    document.getElementById("recoveryPassword").value = "";
+    document.getElementById("recoveryPasswordConfirm").value = "";
+    document.getElementById("passwordRecoveryFields").classList.add("hidden");
+
+    await db.auth.signOut();
+
+    showLoginForm();
+
+    message("loginMessage", "Password berhasil diperbarui. Silakan login kembali.", "success");
+
+  } catch (error) {
+    message("loginMessage", "Gagal memperbarui password: " + error.message, "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/* LUPA PASSWORD */
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    message("loginMessage", "Masukkan email terlebih dahulu.", "error");
+    return;
+  }
+
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://tewesemara.github.io/bali-driver-guide/"
+    });
+
+    if (error) throw error;
+
+    message(
+      "loginMessage",
+      "Permintaan reset password dikirim. Silakan periksa email.",
+      "success"
+    );
+
+  } catch (error) {
+    message("loginMessage", "Gagal mengirim email: " + error.message, "error");
   }
 }
 
@@ -1330,6 +1756,29 @@ async function confirmExcelImport() {
 }
 
 /* HUBUNGKAN TOMBOL */
+  
+/* TOMBOL LOGIN DAN PENDAFTARAN */
+
+document.getElementById("showLoginButton")
+  .addEventListener("click", showLoginForm);
+
+document.getElementById("showSignupButton")
+  .addEventListener("click", showSignupForm);
+
+document.getElementById("signupButton")
+  .addEventListener("click", signup);
+
+document.getElementById("togglePassword")
+  .addEventListener("click", togglePasswordVisibility);
+
+document.getElementById("forgotPasswordButton")
+  .addEventListener("click", forgotPassword);
+
+document.getElementById("signupRole")
+  .addEventListener("change", toggleMitraFields);
+  
+document.getElementById("saveNewPasswordButton")
+  .addEventListener("click", saveNewPassword);
 
 document.getElementById("loginButton")
   .addEventListener("click", login);
