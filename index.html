@@ -914,7 +914,6 @@ function togglePasswordVisibility() {
 }
 
 
-
 /* PENDAFTARAN DRIVER */
 
 async function signup() {
@@ -934,6 +933,7 @@ async function signup() {
     return;
   }
 
+  
   if (password.length < 6) {
     message("loginMessage", "Password minimal 6 karakter.", "error");
     return;
