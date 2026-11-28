@@ -432,7 +432,9 @@ th { background: #f3f6f5; }
   <aside class="sidebar">
 
     <div class="sidebar-title">
-      MENU OWNER
+
+      
+    MENU ADMINISTRASI
     </div>
 
     <nav class="nav-menu">
@@ -479,7 +481,7 @@ th { background: #f3f6f5; }
 
     <div class="card topbar">
       <div>
-        <h3 style="margin:0">Panel Administrasi Owner</h3>
+        <h3 style="margin:0">Panel Administrasi</h3>
         <div id="adminEmail" class="small"></div>
       </div>
 
@@ -821,7 +823,7 @@ function message(id, text, type = "") {
 /* NAVIGASI HALAMAN */
 
 function showPage(pageId) {
-  if (window.currentRole !== "owner") return;
+   if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   document.querySelectorAll(".page-section").forEach(function(page) {
     page.classList.add("hidden");
@@ -1182,7 +1184,7 @@ db.auth.onAuthStateChange((event, session) => {
   }
 });
 
-/* CEK HAK AKSES OWNER */
+/* CEK HAK AKSES OWNER DAN ADMIN OWNER */
 
 async function checkAdmin(user) {
   const { data, error } = await db
@@ -1191,15 +1193,22 @@ async function checkAdmin(user) {
     .eq("id", user.id)
     .single();
 
-  if (error || !data || data.role !== "owner") {
+  if (
+    error ||
+    !data ||
+    !["owner", "admin_owner"].includes(data.role)
+  ) {
     document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("driverDashboard").classList.add("hidden");
     document.getElementById("loginPage").classList.remove("hidden");
 
     window.currentRole = null;
 
+    await db.auth.signOut();
+
     message(
       "loginMessage",
-      "Akses ditolak. Halaman ini khusus untuk Owner.",
+      "Akses ditolak. Halaman ini khusus untuk Owner dan Admin Owner.",
       "error"
     );
 
@@ -1209,10 +1218,14 @@ async function checkAdmin(user) {
   window.currentRole = data.role;
 
   document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("driverDashboard").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
 
+  const roleLabel =
+    data.role === "owner" ? "OWNER" : "ADMIN OWNER";
+
   document.getElementById("adminEmail").textContent =
-    (user.email || "") + " (OWNER)";
+    (user.email || "") + " (" + roleLabel + ")";
 
   showPage("page-dashboard");
 
@@ -1222,10 +1235,10 @@ async function checkAdmin(user) {
   return true;
 }
 
-/* MEMUAT STATISTIK DASHBOARD OWNER */
+/* MEMUAT STATISTIK DASHBOARD OWNER DAN ADMIN OWNER */
 
 async function loadDashboardStats() {
-  if (window.currentRole !== "owner") return;
+  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   const statsMessage = document.getElementById("statsMessage");
   statsMessage.textContent = "Memuat statistik dashboard...";
@@ -1303,7 +1316,7 @@ async function logout() {
 /* MEMUAT DATA DRIVER */
 
 async function loadDrivers() {
-  if (window.currentRole !== "owner") return;
+ if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   message("listMessage", "Memuat data driver...");
 
@@ -1381,9 +1394,11 @@ function renderDrivers() {
           <button class="secondary" onclick="editDriver('${d.id}')">
             Edit
           </button>
-          <button class="danger" onclick="deleteDriver('${d.id}')">
-            Hapus
-          </button>
+          ${window.currentRole === "owner" ? `
+  <button class="danger" onclick="deleteDriver('${d.id}')">
+    Hapus
+  </button>
+` : ""}
         </td>
       </tr>
     `;
@@ -1415,10 +1430,10 @@ function getFormData() {
 async function saveDriver(event) {
   event.preventDefault();
 
-  if (window.currentRole !== "owner") {
-    message("formMessage", "Akses tidak diizinkan.", "error");
-    return;
-  }
+  if (!["owner", "admin_owner"].includes(window.currentRole)) {
+  message("formMessage", "Akses tidak diizinkan.", "error");
+  return;
+}
 
   const record = getFormData();
   const id = document.getElementById("driverId").value;
@@ -1463,8 +1478,8 @@ async function saveDriver(event) {
 /* EDIT DRIVER */
 
 function editDriver(id) {
-  if (window.currentRole !== "owner") return;
-
+ if (!["owner", "admin_owner"].includes(window.currentRole)) return;
+  
   const d = drivers.find(function(item) {
     return String(item.id) === String(id);
   });
@@ -1539,7 +1554,7 @@ function resetForm() {
 /* MEMBACA FILE EXCEL */
 
 async function handleExcelFile(event) {
-  if (window.currentRole !== "owner") return;
+  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   const file = event.target.files[0];
 
@@ -1622,8 +1637,8 @@ const kolom = {
 /* PROSES IMPORT DAN PEMERIKSAAN DUPLIKAT */
 
 async function confirmExcelImport() {
-  if (window.currentRole !== "owner") return;
-
+  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
+  
   const data = window.excelImportData || [];
 
   if (!data.length) {
@@ -1642,11 +1657,15 @@ async function confirmExcelImport() {
   let skipped = 0;
 
   for (const record of data) {
-    const phone = String(record.phone || "").replace(/\D/g, "");
+    const phone = String(record.phone || "")
+  .replace(/\D/g, "")
+  .replace(/^0/, "62");
 
-    const duplicate = knownDrivers.find(function(d) {
-      return String(d.phone || "").replace(/\D/g, "") === phone;
-    });
+const duplicate = knownDrivers.find(function(d) {
+  return String(d.phone || "")
+    .replace(/\D/g, "")
+    .replace(/^0/, "62") === phone;
+});
 
     if (duplicate) {
       const pilih = confirm(
@@ -1762,9 +1781,6 @@ document.getElementById("excelFile")
 
 /* PERIKSA SESSION SAAT HALAMAN DIBUKA */
 
-
-/* PERIKSA SESSION SAAT HALAMAN DIBUKA */
-
 async function startApp() {
   try {
     const { data, error } = await db.auth.getSession();
@@ -1789,10 +1805,13 @@ async function startApp() {
         throw new Error("Data profil akun tidak ditemukan.");
       }
 
-      if (profile.role === "owner") {
-        await checkAdmin(user);
+      if (
+  profile.role === "owner" ||
+  profile.role === "admin_owner"
+) {
+   await checkAdmin(user);
 
-      } else if (profile.role === "driver") {
+} else if (profile.role === "driver") {
         document.getElementById("loginPage").classList.add("hidden");
         document.getElementById("dashboard").classList.add("hidden");
         document.getElementById("driverDashboard").classList.remove("hidden");
@@ -1824,7 +1843,12 @@ async function startApp() {
   }
 }
 
+/* JALANKAN APLIKASI */
+
+startApp();
+
 </script>
+
 
 </body>
 </html>
