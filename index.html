@@ -587,6 +587,7 @@ td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
         🏢 Data Mitra
       </button>
 
+      <button id="adminOwnerNav" class="nav-button hidden" data-page="page-admin-owners">🛡 Data Admin Owner</button>
       <button class="nav-button" data-page="page-visits">
         📋 Kunjungan
       </button>
@@ -813,16 +814,8 @@ td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
         <p>Pengelolaan tempat wisata dan mitra Bali Driver & Guide.</p>
       </div>
 
-      <div class="placeholder">
-        <div class="placeholder-icon">🏢</div>
-        <h3>Pengelolaan Data Mitra</h3>
-        <p>
-          Halaman ini akan digunakan untuk melihat pendaftaran mitra,
-          memeriksa status mitra, dan mengelola data tempat wisata.
-        </p>
-        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
-      </div>
-    </section>
+      <div class="card"><h3>Tambah / Edit Mitra</h3><form id="partnerForm"><input type="hidden" id="partnerEditId"><div class="grid"><div><label for="partner_name">Nama objek wisata</label><input id="partner_name" required ></div><div><label for="partner_kabupaten">Kabupaten/Kota</label><input id="partner_kabupaten"  ></div><div><label for="partner_address">Alamat</label><input id="partner_address"  ></div><div><label for="partner_contact_name">Nama kontak</label><input id="partner_contact_name"  ></div><div><label for="partner_phone">WhatsApp</label><input id="partner_phone"  ></div><div><label for="partner_email">Email</label><input id="partner_email"  type="email"></div></div><div class="actions"><button class="primary" type="submit">Simpan Mitra</button><button class="secondary" type="reset">Batal</button></div></form><div id="partnerMessage" class="message" role="status"></div></div><div class="card"><h3>Daftar Mitra</h3><label for="partnerSearch">Cari mitra</label><input id="partnerSearch"><div class="actions"><button id="partnerReload" class="secondary">Muat ulang</button></div><div id="partnerListMessage" role="status"></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Kabupaten</th><th>WhatsApp</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="partnerRows"></tbody></table></div></div></section>
+<section id="page-admin-owners" class="page-section hidden"><div class="page-heading"><h2>Data Admin Owner</h2><p>Penunjukan akun yang sudah terdaftar.</p></div><div class="card"><label for="adminCandidate">Email akun Driver yang akan ditunjuk</label><input id="adminCandidate" type="email"><div class="actions"><button id="assignAdminButton" class="primary">Tunjuk Admin Owner</button><button id="adminReload" class="secondary">Muat ulang</button></div><div id="adminListMessage" role="status"></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Email</th><th>WhatsApp</th></tr></thead><tbody id="adminRows"></tbody></table></div></div></section>
 
     <!-- HALAMAN KUNJUNGAN -->
 
@@ -1015,6 +1008,9 @@ function message(id, text, type = "") {
 /* NAVIGASI HALAMAN */
 
 function showPage(pageId) {
+  if (pageId === "page-admin-owners" && window.currentRole !== "owner") return;
+  if (pageId === "page-partners") loadPartners();
+  if (pageId === "page-admin-owners") loadAdminOwners();
    if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   document.querySelectorAll(".page-section").forEach(function(page) {
@@ -1422,6 +1418,7 @@ async function checkAdmin(user) {
   document.getElementById("adminEmail").textContent =
     (user.email || "") + " (" + roleLabel + ")";
 
+  document.getElementById("adminOwnerNav").classList.toggle("hidden", data.role !== "owner");
   showPage("page-dashboard");
 
   await loadDrivers();
@@ -1496,6 +1493,11 @@ async function logout() {
   }
 
   drivers = [];
+  partnerData = [];
+  elBDG("partnerRows").replaceChildren();
+  elBDG("adminRows").replaceChildren();
+  elBDG("partnerForm").reset();
+  elBDG("adminCandidate").value="";
   window.currentRole = null;
 
   document.getElementById("dashboard").classList.add("hidden");
@@ -2083,6 +2085,73 @@ async function startApp() {
 }
 
 /* JALANKAN APLIKASI */
+
+
+let partnerData=[];
+const partnerKeys=["name","kabupaten","address","contact_name","phone","email"];
+const elBDG=id=>document.getElementById(id);
+const staffBDG=()=>["owner","admin_owner"].includes(window.currentRole);
+async function loadPartners(){
+ if(!staffBDG())return;
+ elBDG("partnerRows").replaceChildren();
+ const {data,error}=await db.from("partners").select("id,name,kabupaten,address,contact_name,phone,email,status").order("name");
+ if(!staffBDG())return;
+ if(error){partnerData=[];message("partnerListMessage",error.message,"error");return;}
+ partnerData=data||[];renderPartners();
+}
+function renderPartners(){
+ if(!staffBDG())return;
+ const q=elBDG("partnerSearch").value.toLowerCase();
+ const rows=partnerData.filter(p=>[p.name,p.kabupaten,p.phone].some(v=>String(v||"").toLowerCase().includes(q)));
+ const tbody=elBDG("partnerRows");tbody.replaceChildren();
+ for(const p of rows){
+ const tr=tbody.insertRow();
+ for(const v of [p.name,p.kabupaten,p.phone,({pending:"Menunggu",approved:"Aktif",rejected:"Ditolak",suspended:"Nonaktif"})[p.status]||p.status])tr.insertCell().textContent=v||"-";
+ const cell=tr.insertCell();
+ const btn=(label,fn,cls="secondary")=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=label;b.onclick=fn;cell.append(b);};
+ btn("Detail / Edit",()=>{elBDG("partnerEditId").value=p.id;for(const k of partnerKeys)elBDG("partner_"+k).value=p[k]||"";elBDG("partnerForm").scrollIntoView();});
+ if(p.status==="pending")btn("Setujui",()=>partnerAction("approve_partner",{p_partner_id:p.id}),"primary");
+ if(window.currentRole==="owner"){
+ if(p.status==="approved")btn("Nonaktifkan",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"suspended"}));
+ if(p.status==="pending")btn("Tolak",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"rejected"}));
+ }
+ }
+ message("partnerListMessage",rows.length?rows.length+" mitra":"Belum ada mitra yang cocok.");
+}
+async function partnerAction(fn,args){
+ if(!staffBDG()||!confirm("Lanjutkan perubahan status mitra?"))return;
+ const {error}=await db.rpc(fn,args);message("partnerMessage",error?error.message:"Status diperbarui",error?"error":"success");if(!error){await loadPartners();await loadDashboardStats();}
+}
+elBDG("partnerForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!staffBDG())return;
+ const b=e.submitter;b.disabled=true;
+ try{const args={};for(const k of partnerKeys)args["p_"+k]=elBDG("partner_"+k).value.trim();const id=elBDG("partnerEditId").value;if(id)args.p_partner_id=id;
+ const {error}=await db.rpc(id?"update_partner_profile":"staff_register_partner",args);if(error)throw error;
+ e.target.reset();message("partnerMessage","Mitra berhasil disimpan","success");await loadPartners();await loadDashboardStats();
+ }catch(error){message("partnerMessage",error.message,"error");}finally{b.disabled=false;}
+});
+elBDG("partnerForm").addEventListener("reset",()=>{elBDG("partnerEditId").value="";});
+elBDG("partnerSearch").addEventListener("input",renderPartners);
+elBDG("partnerReload").onclick=loadPartners;
+async function loadAdminOwners(){
+ if(window.currentRole!=="owner")return;
+ elBDG("adminRows").replaceChildren();
+ const {data,error}=await db.from("profiles").select("full_name,email,whatsapp").eq("role","admin_owner").order("full_name");
+ if(window.currentRole!=="owner")return;
+ if(error){message("adminListMessage",error.message,"error");return;}
+ for(const a of data||[]){const tr=elBDG("adminRows").insertRow();for(const v of [a.full_name,a.email,a.whatsapp])tr.insertCell().textContent=v||"-";}
+ message("adminListMessage",(data||[]).length+" Admin Owner");
+}
+elBDG("adminReload").onclick=loadAdminOwners;
+elBDG("assignAdminButton").onclick=async()=>{
+ if(window.currentRole!=="owner")return;
+ const input=elBDG("adminCandidate"),email=input.value.trim();if(!email||!input.checkValidity()){message("adminListMessage","Email tidak valid","error");return;}
+ const b=elBDG("assignAdminButton");b.disabled=true;
+ try{const {data,error}=await db.from("profiles").select("id,email").eq("email",email).eq("role","driver").single();if(error||!data)throw new Error("Akun Driver tidak ditemukan.");
+ if(!confirm("Berikan akses Admin Owner kepada "+data.email+"?"))return;
+ const result=await db.rpc("owner_assign_admin_owner",{p_user_id:data.id});if(result.error)throw result.error;input.value="";await loadAdminOwners();
+ }catch(error){message("adminListMessage",error.message,"error");}finally{b.disabled=false;}
+};
 
 startApp();
 
