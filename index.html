@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bali Driver & Guide - Owner Dashboard</title>
+<title>Bali Driver & Guide</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -394,6 +394,81 @@ th { background: #f3f6f5; }
   width: 100%;
   margin-top: 10px;
 }
+
+/* BDG — penyegaran antarmuka */
+:root { --bdg-green:#176b50; --bdg-ink:#17362e; --bdg-line:#dce6e1; }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:#f4f7f6; color:var(--bdg-ink); }
+body > header { background:#123b35; padding:20px clamp(18px,4vw,42px); border-bottom:3px solid #4aa58a; }
+body > header h2 { font-size:clamp(20px,3vw,26px); letter-spacing:-.5px; }
+body > header p { font-size:13px; }
+.card,.stat-card,.placeholder { border:1px solid var(--bdg-line); border-radius:16px; box-shadow:0 4px 18px #17362e08; }
+.card { padding:24px; }
+h3 { font-size:18px; letter-spacing:-.3px; }
+label { color:#344d45; font-weight:600; }
+input,select,button { font-family:inherit; }
+input,select { min-height:44px; border-radius:10px; border-color:#cbdad3; color:var(--bdg-ink); }
+input:focus,select:focus { box-shadow:0 0 0 3px #176b501c; }
+button { min-height:42px; border-radius:10px; transition:background-color .15s; }
+button:focus-visible { outline:3px solid #499e85; outline-offset:3px; }
+.primary:hover:not(:disabled) { background:#11553f; }
+.secondary { background:#edf3f0; color:#234b3e; }
+.secondary:hover:not(:disabled) { background:#dcebe4; }
+.danger:hover:not(:disabled) { background:#922929; }
+.login { max-width:460px; margin:clamp(20px,6vh,70px) auto; }
+.login .card { padding:clamp(20px,5vw,34px); }
+#authTitle { font-size:26px; margin-bottom:8px; }
+.login .actions:first-of-type { display:grid; grid-template-columns:1fr 1fr; padding:5px; background:#edf3f0; border-radius:12px; }
+#showLoginButton,#showSignupButton { background:transparent; color:#426057; }
+.login:has(#signupFields.hidden) #showLoginButton,.login:has(#signupFields:not(.hidden)) #showSignupButton { background:#fff; color:#176b50; box-shadow:0 1px 5px #17362e18; }
+#forgotPasswordButton { background:transparent; color:#176b50; padding-left:0; }
+#togglePassword { background:#edf3f0; flex-shrink:0; }
+.login input { min-width:0; }
+.sidebar { background:#123b35; padding:24px 14px; }
+.nav-button { font-weight:550; border-radius:10px; }
+.nav-button.active { background:#286d59; box-shadow:inset 3px 0 #91d8bc; }
+.main-content { padding:clamp(16px,3vw,32px); }
+.page-heading h2 { font-size:clamp(23px,3vw,30px); letter-spacing:-.7px; }
+.page-heading p,.small { color:#52675f; }
+.stat-card { border-left:1px solid var(--bdg-line); border-top:3px solid #218267; padding:20px; }
+.stat-card::before { display:grid; place-items:center; width:40px; height:40px; border-radius:12px; background:#e8f4ee; margin-bottom:16px; font-size:20px; }
+.stat-card:nth-child(1)::before { content:"🚗"; }
+.stat-card:nth-child(2)::before { content:"🏢"; }
+.stat-card:nth-child(3)::before { content:"📋"; }
+.stat-card:nth-child(4)::before { content:"💰"; }
+.stat-value { font-size:clamp(21px,2.4vw,30px); font-variant-numeric:tabular-nums; }
+.grid { gap:14px 20px; }
+.table-wrap { border:1px solid var(--bdg-line); border-radius:12px; }
+th { background:#edf4f0; color:#345348; font-weight:650; }
+td,th { padding:14px 12px; }
+tbody tr:hover { background:#f5faf7; }
+tbody tr:last-child td { border-bottom:0; }
+td:last-child { white-space:nowrap; }
+td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
+#search { background:#f8faf9; }
+#driverDashboard { max-width:900px; margin:24px auto; padding:0 16px; }
+#driverDashboard .card:nth-child(2) h2 { font-size:clamp(22px,4vw,30px); overflow-wrap:anywhere; }
+#driverDashboard .card:nth-child(2) p { padding:14px 0; margin:0; border-bottom:1px solid var(--bdg-line); overflow-wrap:anywhere; }
+#driverDashboard .card:nth-child(2) p:last-child { border-bottom:0; }
+.driver-detail-modal { border-radius:20px; }
+.driver-detail-modal::backdrop { background:#102b24aa; }
+#adminEmail { overflow-wrap:anywhere; }
+.topbar > div { min-width:0; }
+@media(max-width:1050px) { .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:650px) {
+  .card { padding:16px; }
+  .sidebar { padding:12px; }
+  .nav-menu { scrollbar-width:thin; }
+  .nav-button { min-height:44px; }
+  .main-content { padding:14px; }
+  .stat-card { padding:14px; }
+  .stats-grid { gap:10px; }
+  .stat-label { font-size:11px; }
+  input,select { font-size:16px; }
+  .actions > button { flex:1 1 auto; }
+}
+@media(max-width:350px) { .stats-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce) { button { transition:none; } }
+
 </style>
 </head>
 
@@ -401,7 +476,7 @@ th { background: #f3f6f5; }
 
 <header>
   <h2>Bali Driver & Guide</h2>
-  <p>Owner Dashboard - Sistem Administrasi</p>
+  <p>Sistem Informasi Driver & Mitra Wisata</p>
 </header>
 
 
@@ -427,7 +502,7 @@ th { background: #f3f6f5; }
 <div style="display:flex;gap:8px">
   <input id="password" type="password"
     placeholder="Masukkan password" style="flex:1">
-  <button type="button" id="togglePassword">👁</button>
+  <button type="button" id="togglePassword" aria-label="Tampilkan atau sembunyikan password">👁</button>
 </div>
 
 <div id="signupFields" class="hidden">
@@ -512,6 +587,7 @@ th { background: #f3f6f5; }
         🏢 Data Mitra
       </button>
 
+      <button id="adminOwnerNav" class="nav-button hidden" data-page="page-admin-owners">🛡 Data Admin Owner</button>
       <button class="nav-button" data-page="page-visits">
         📋 Kunjungan
       </button>
@@ -738,16 +814,8 @@ th { background: #f3f6f5; }
         <p>Pengelolaan tempat wisata dan mitra Bali Driver & Guide.</p>
       </div>
 
-      <div class="placeholder">
-        <div class="placeholder-icon">🏢</div>
-        <h3>Pengelolaan Data Mitra</h3>
-        <p>
-          Halaman ini akan digunakan untuk melihat pendaftaran mitra,
-          memeriksa status mitra, dan mengelola data tempat wisata.
-        </p>
-        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
-      </div>
-    </section>
+      <div class="card"><h3>Tambah / Edit Mitra</h3><form id="partnerForm"><input type="hidden" id="partnerEditId"><div class="grid"><div><label for="partner_name">Nama objek wisata</label><input id="partner_name" required ></div><div><label for="partner_kabupaten">Kabupaten/Kota</label><input id="partner_kabupaten"  ></div><div><label for="partner_address">Alamat</label><input id="partner_address"  ></div><div><label for="partner_contact_name">Nama kontak</label><input id="partner_contact_name"  ></div><div><label for="partner_phone">WhatsApp</label><input id="partner_phone"  ></div><div><label for="partner_email">Email</label><input id="partner_email"  type="email"></div></div><div class="actions"><button class="primary" type="submit">Simpan Mitra</button><button class="secondary" type="reset">Batal</button></div></form><div id="partnerMessage" class="message" role="status"></div></div><div class="card"><h3>Daftar Mitra</h3><label for="partnerSearch">Cari mitra</label><input id="partnerSearch"><div class="actions"><button id="partnerReload" class="secondary">Muat ulang</button></div><div id="partnerListMessage" role="status"></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Kabupaten</th><th>WhatsApp</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="partnerRows"></tbody></table></div></div></section>
+<section id="page-admin-owners" class="page-section hidden"><div class="page-heading"><h2>Data Admin Owner</h2><p>Penunjukan akun yang sudah terdaftar.</p></div><div class="card"><label for="adminCandidate">Email akun Driver yang akan ditunjuk</label><input id="adminCandidate" type="email"><div class="actions"><button id="assignAdminButton" class="primary">Tunjuk Admin Owner</button><button id="adminReload" class="secondary">Muat ulang</button></div><div id="adminListMessage" role="status"></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Email</th><th>WhatsApp</th></tr></thead><tbody id="adminRows"></tbody></table></div></div></section>
 
     <!-- HALAMAN KUNJUNGAN -->
 
@@ -777,16 +845,7 @@ th { background: #f3f6f5; }
         <p>Pengelolaan dan pemantauan komisi mitra.</p>
       </div>
 
-      <div class="placeholder">
-        <div class="placeholder-icon">💰</div>
-        <h3>Data Komisi</h3>
-        <p>
-          Halaman ini akan menampilkan komisi dengan status
-          pending, approved, dan paid.
-        </p>
-        <p><strong>Status:</strong> Menunggu pengembangan berikutnya.</p>
-      </div>
-    </section>
+      <div class="card"><h3>Pemantauan Komisi dan Koreksi</h3><button type="button" id="ownerCommissionReload" class="secondary">Muat ulang</button><p id="ownerCommissionMsg" role="status"></p><div id="ownerCommissionList"></div></div></section>
 
     <!-- HALAMAN LAPORAN -->
 
@@ -911,8 +970,9 @@ th { background: #f3f6f5; }
     <p>Status: Driver</p>
   </div>
 
-</div>
+<div class="card"><h3>Komisi dan Permintaan Koreksi</h3><button type="button" id="driverCommissionReload" class="secondary">Muat ulang</button><p id="driverCommissionMsg" role="status"></p><div id="driverCommissionList"></div></div></div>
 
+<div id="partnerDashboard" class="hidden" style="max-width:1100px;margin:24px auto;padding:0 16px"><div class="card topbar"><div><h3>Bali Driver &amp; Guide</h3><p>Dashboard Admin Mitra</p><span id="mitraAccount"></span></div><button id="mitraLogout" class="danger">Keluar</button></div><div class="card"><h2>Profil Objek Wisata</h2><p id="mitraStatus" role="status"></p><form id="mitraForm"><div class="grid"><div><label for="mitra_name">Nama objek wisata</label><input id="mitra_name" required ></div><div><label for="mitra_kabupaten">Kabupaten/Kota</label><input id="mitra_kabupaten"  ></div><div><label for="mitra_address">Alamat</label><input id="mitra_address"  ></div><div><label for="mitra_contact_name">Nama kontak</label><input id="mitra_contact_name"  ></div><div><label for="mitra_phone">WhatsApp</label><input id="mitra_phone"  ></div><div><label for="mitra_email">Email</label><input id="mitra_email"  type="email"></div></div><div class="actions"><button id="mitraSave" class="primary" type="submit" disabled>Simpan</button><button id="mitraReload" class="secondary" type="button">Muat ulang</button></div></form><p id="mitraMessage" role="status"></p></div><div class="card"><h3>Layanan Mitra</h3><p id="mitraServices">Pencarian driver tersedia setelah mitra disetujui.</p><form id="mitraSearchForm" class="hidden"><label for="mitraKeyword">Nama atau nomor WhatsApp driver</label><input id="mitraKeyword" required minlength="3" maxlength="100" placeholder="Minimal 3 karakter"><div class="actions"><button id="mitraSearchButton" class="primary" type="submit">Cari Driver</button></div></form><p id="mitraSearchMessage" role="status"></p><div class="table-wrap"><table id="mitraSearchTable" class="hidden"><thead><tr><th>Nama</th><th>WhatsApp</th><th>Kabupaten</th><th>Kendaraan</th><th>Plat</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="mitraSearchRows"></tbody></table></div><form id="mitraVisitForm" class="hidden"><h3>Input Kunjungan dan Komisi</h3><p>Driver: <strong id="visitDriverName"></strong></p><div class="grid"><div><label for="visitGuestCount">Jumlah tamu</label><input id="visitGuestCount" type="number" min="1" max="2147483647" step="1" required></div><div><label for="visitOrigin">Asal tamu</label><input id="visitOrigin" required maxlength="200"></div><div><label for="visitAccommodation">Tempat menginap</label><input id="visitAccommodation" required maxlength="200"></div><div><label for="visitAmount">Komisi (Rp)</label><input id="visitAmount" type="number" min="0" step="1" required></div><div><label for="visitNotes">Catatan</label><input id="visitNotes" maxlength="500"></div></div><div class="actions"><button id="visitSave" type="submit" class="primary">Simpan Kunjungan dan Komisi</button><button id="visitCancel" type="button" class="secondary">Batal</button></div></form><p id="visitMessage" role="status"></p></div><div class="card"><h3>Pengelolaan Komisi</h3><button type="button" id="mitraCommissionReload" class="secondary">Muat ulang</button><p id="mitraCommissionMsg" role="status"></p><div id="mitraCommissionList"></div></div></div>
 <script>
 "use strict";
 
@@ -940,6 +1000,10 @@ function message(id, text, type = "") {
 /* NAVIGASI HALAMAN */
 
 function showPage(pageId) {
+  if (pageId === "page-admin-owners" && window.currentRole !== "owner") return;
+  if (pageId === "page-commissions") loadCommissionPanel("ownerCommission");
+  if (pageId === "page-partners") loadPartners();
+  if (pageId === "page-admin-owners") loadAdminOwners();
    if (!["owner", "admin_owner"].includes(window.currentRole)) return;
 
   document.querySelectorAll(".page-section").forEach(function(page) {
@@ -1018,13 +1082,16 @@ async function login() {
 ) {
   await checkAdmin(data.user);
 
-} else if (profile.role === "driver") {
+} else if (profile.role === "partner_admin") {
+      await openMitraDashboard();
+    } else if (profile.role === "driver") {
 
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("driverDashboard").classList.remove("hidden");
       document.getElementById("loginPage").classList.add("hidden");
 
       window.currentRole = "driver";
+      loadCommissionPanel("driverCommission");
 
       document.getElementById("driverName").textContent =
         profile.full_name || "";
@@ -1347,6 +1414,7 @@ async function checkAdmin(user) {
   document.getElementById("adminEmail").textContent =
     (user.email || "") + " (" + roleLabel + ")";
 
+  document.getElementById("adminOwnerNav").classList.toggle("hidden", data.role !== "owner");
   showPage("page-dashboard");
 
   await loadDrivers();
@@ -1420,8 +1488,22 @@ async function logout() {
     return;
   }
 
+  document.getElementById("partnerDashboard").classList.add("hidden");
+  mitraId=null;
+  resetMitraSearch();
+  document.getElementById("mitraForm").reset();
+  document.getElementById("mitraSave").disabled=true;
+  document.getElementById("mitraAccount").textContent="";
+  document.getElementById("mitraStatus").textContent="";
+  document.getElementById("mitraMessage").textContent="";
   drivers = [];
+  partnerData = [];
+  elBDG("partnerRows").replaceChildren();
+  elBDG("adminRows").replaceChildren();
+  elBDG("partnerForm").reset();
+  elBDG("adminCandidate").value="";
   window.currentRole = null;
+  commissionEpoch++; for(const id of commissionPanels){elBDG(id+"List").replaceChildren();elBDG(id+"Msg").textContent="";}
 
   document.getElementById("dashboard").classList.add("hidden");
   document.getElementById("driverDashboard").classList.add("hidden");
@@ -1512,7 +1594,6 @@ function renderDrivers() {
         <td>${escapeHTML(d.vehicle_type)}</td>
         <td>${escapeHTML(d.plate_no)}</td>
         <td>
-          <td>
   <button class="primary" onclick="showDriverDetail('${d.id}')">
     Detail
   </button>
@@ -1976,12 +2057,15 @@ async function startApp() {
 ) {
    await checkAdmin(user);
 
-} else if (profile.role === "driver") {
+} else if (profile.role === "partner_admin") {
+      await openMitraDashboard();
+    } else if (profile.role === "driver") {
         document.getElementById("loginPage").classList.add("hidden");
         document.getElementById("dashboard").classList.add("hidden");
         document.getElementById("driverDashboard").classList.remove("hidden");
 
         window.currentRole = "driver";
+      loadCommissionPanel("driverCommission");
 
         document.getElementById("driverName").textContent =
           profile.full_name || "";
@@ -2010,6 +2094,179 @@ async function startApp() {
 
 /* JALANKAN APLIKASI */
 
+
+let partnerData=[];
+const partnerKeys=["name","kabupaten","address","contact_name","phone","email"];
+const elBDG=id=>document.getElementById(id);
+const staffBDG=()=>["owner","admin_owner"].includes(window.currentRole);
+async function loadPartners(){
+ if(!staffBDG())return;
+ elBDG("partnerRows").replaceChildren();
+ const {data,error}=await db.from("partners").select("id,name,kabupaten,address,contact_name,phone,email,status").order("name");
+ if(!staffBDG())return;
+ if(error){partnerData=[];message("partnerListMessage",error.message,"error");return;}
+ partnerData=data||[];renderPartners();
+}
+function renderPartners(){
+ if(!staffBDG())return;
+ const q=elBDG("partnerSearch").value.toLowerCase();
+ const rows=partnerData.filter(p=>[p.name,p.kabupaten,p.phone].some(v=>String(v||"").toLowerCase().includes(q)));
+ const tbody=elBDG("partnerRows");tbody.replaceChildren();
+ for(const p of rows){
+ const tr=tbody.insertRow();
+ for(const v of [p.name,p.kabupaten,p.phone,({pending:"Menunggu",approved:"Aktif",rejected:"Ditolak",suspended:"Nonaktif"})[p.status]||p.status])tr.insertCell().textContent=v||"-";
+ const cell=tr.insertCell();
+ const btn=(label,fn,cls="secondary")=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=label;b.onclick=fn;cell.append(b);};
+ btn("Detail / Edit",()=>{elBDG("partnerEditId").value=p.id;for(const k of partnerKeys)elBDG("partner_"+k).value=p[k]||"";elBDG("partnerForm").scrollIntoView();});
+ if(p.status==="pending")btn("Setujui",()=>partnerAction("approve_partner",{p_partner_id:p.id}),"primary");
+ if(window.currentRole==="owner"){
+ if(p.status==="approved")btn("Nonaktifkan",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"suspended"}));
+ if(p.status==="pending")btn("Tolak",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"rejected"}));
+ }
+ }
+ message("partnerListMessage",rows.length?rows.length+" mitra":"Belum ada mitra yang cocok.");
+}
+async function partnerAction(fn,args){
+ if(!staffBDG()||!confirm("Lanjutkan perubahan status mitra?"))return;
+ const {error}=await db.rpc(fn,args);message("partnerMessage",error?error.message:"Status diperbarui",error?"error":"success");if(!error){await loadPartners();await loadDashboardStats();}
+}
+elBDG("partnerForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!staffBDG())return;
+ const b=e.submitter;b.disabled=true;
+ try{const args={};for(const k of partnerKeys)args["p_"+k]=elBDG("partner_"+k).value.trim();const id=elBDG("partnerEditId").value;if(id)args.p_partner_id=id;
+ const {error}=await db.rpc(id?"update_partner_profile":"staff_register_partner",args);if(error)throw error;
+ e.target.reset();message("partnerMessage","Mitra berhasil disimpan","success");await loadPartners();await loadDashboardStats();
+ }catch(error){message("partnerMessage",error.message,"error");}finally{b.disabled=false;}
+});
+elBDG("partnerForm").addEventListener("reset",()=>{elBDG("partnerEditId").value="";});
+elBDG("partnerSearch").addEventListener("input",renderPartners);
+elBDG("partnerReload").onclick=loadPartners;
+async function loadAdminOwners(){
+ if(window.currentRole!=="owner")return;
+ elBDG("adminRows").replaceChildren();
+ const {data,error}=await db.from("profiles").select("full_name,email,whatsapp").eq("role","admin_owner").order("full_name");
+ if(window.currentRole!=="owner")return;
+ if(error){message("adminListMessage",error.message,"error");return;}
+ for(const a of data||[]){const tr=elBDG("adminRows").insertRow();for(const v of [a.full_name,a.email,a.whatsapp])tr.insertCell().textContent=v||"-";}
+ message("adminListMessage",(data||[]).length+" Admin Owner");
+}
+elBDG("adminReload").onclick=loadAdminOwners;
+elBDG("assignAdminButton").onclick=async()=>{
+ if(window.currentRole!=="owner")return;
+ const input=elBDG("adminCandidate"),email=input.value.trim();if(!email||!input.checkValidity()){message("adminListMessage","Email tidak valid","error");return;}
+ const b=elBDG("assignAdminButton");b.disabled=true;
+ try{const {data,error}=await db.from("profiles").select("id,email").eq("email",email).eq("role","driver").single();if(error||!data)throw new Error("Akun Driver tidak ditemukan.");
+ if(!confirm("Berikan akses Admin Owner kepada "+data.email+"?"))return;
+ const result=await db.rpc("owner_assign_admin_owner",{p_user_id:data.id});if(result.error)throw result.error;input.value="";await loadAdminOwners();
+ }catch(error){message("adminListMessage",error.message,"error");}finally{b.disabled=false;}
+};
+
+let mitraId=null;
+let mitraApproved=false;
+let searchEpoch=0;
+let selectedVisitDriver=null;
+let visitSaving=false;
+function clearVisit(){selectedVisitDriver=null;elBDG("mitraVisitForm").reset();elBDG("mitraVisitForm").classList.add("hidden");elBDG("visitDriverName").textContent="";}
+function resetMitraSearch(){clearVisit();elBDG("visitMessage").textContent="";searchEpoch++;mitraApproved=false;elBDG("mitraSearchForm").classList.add("hidden");elBDG("mitraSearchTable").classList.add("hidden");elBDG("mitraSearchRows").replaceChildren();elBDG("mitraSearchForm").reset();elBDG("mitraSearchMessage").textContent="";elBDG("mitraSearchButton").disabled=false;}
+let mitraBusy=false;
+async function openMitraDashboard(){
+ window.currentRole="partner_admin";
+ for(const id of ["dashboard","driverDashboard","loginPage"])elBDG(id).classList.add("hidden");
+ elBDG("partnerDashboard").classList.remove("hidden");
+ await loadMitraProfile();
+ await loadCommissionPanel("mitraCommission");
+}
+async function loadMitraProfile(){
+ if(window.currentRole!=="partner_admin"||mitraBusy)return;
+ mitraBusy=true;mitraId=null;resetMitraSearch();elBDG("mitraSave").disabled=true;elBDG("mitraForm").reset();
+ try{
+ const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user)throw new Error("Sesi tidak valid");
+ const {data:members,error:memberError}=await db.from("partner_users").select("partner_id").eq("user_id",auth.user.id).eq("role","partner_admin");if(memberError)throw memberError;
+ if(window.currentRole!=="partner_admin")return;
+ elBDG("mitraAccount").textContent=auth.user.email||"";
+ if(members.length>1)throw new Error("Akun memiliki beberapa mitra. Hubungi Owner.");
+ if(!members.length){elBDG("mitraStatus").textContent="Belum terdaftar. Lengkapi formulir untuk mengajukan persetujuan.";elBDG("mitraSave").textContent="Daftarkan objek wisata";}
+ else{
+ const {data:p,error}=await db.from("partners").select("id,name,kabupaten,address,contact_name,phone,email,status").eq("id",members[0].partner_id).single();if(error)throw error;
+ if(window.currentRole!=="partner_admin")return;
+ mitraId=p.id;mitraApproved=p.status==="approved";elBDG("mitraSearchForm").classList.toggle("hidden",!mitraApproved);elBDG("mitraServices").textContent=mitraApproved?"Cari driver berdasarkan nama atau WhatsApp.":"Pencarian driver tersedia setelah mitra disetujui.";for(const k of partnerKeys)elBDG("mitra_"+k).value=p[k]||"";
+ elBDG("mitraStatus").textContent="Status: "+(({pending:"Menunggu persetujuan",approved:"Aktif",rejected:"Ditolak",suspended:"Nonaktif"})[p.status]||p.status);
+ elBDG("mitraSave").textContent="Simpan perubahan";
+ }
+ elBDG("mitraSave").disabled=false;message("mitraMessage","");
+ }catch(e){message("mitraMessage",e.message,"error");}finally{mitraBusy=false;}
+}
+elBDG("mitraLogout").onclick=logout;
+elBDG("mitraReload").onclick=loadMitraProfile;
+elBDG("mitraForm").onsubmit=async e=>{
+ e.preventDefault();if(window.currentRole!=="partner_admin"||mitraBusy)return;
+ mitraBusy=true;elBDG("mitraSave").disabled=true;
+ try{const args={};for(const k of partnerKeys)args["p_"+k]=elBDG("mitra_"+k).value.trim();
+ if(mitraId)args.p_partner_id=mitraId;
+ const {error}=await db.rpc(mitraId?"update_partner_profile":"register_partner",args);if(error)throw error;
+ mitraBusy=false;await loadMitraProfile();if(window.currentRole==="partner_admin")message("mitraMessage","Data berhasil disimpan.","success");
+ }catch(e){message("mitraMessage",e.message,"error");if(window.currentRole==="partner_admin")elBDG("mitraSave").disabled=false;}finally{mitraBusy=false;}
+};
+
+elBDG("mitraSearchForm").onsubmit=async e=>{
+ e.preventDefault();if(window.currentRole!=="partner_admin"||!mitraApproved||!mitraId)return;
+ const keyword=elBDG("mitraKeyword").value.trim();if(keyword.length<3||keyword.length>100){message("mitraSearchMessage","Masukkan 3–100 karakter.","error");return;}
+ if(visitSaving)return;clearVisit();const epoch=++searchEpoch;const button=elBDG("mitraSearchButton");button.disabled=true;
+ elBDG("mitraSearchRows").replaceChildren();elBDG("mitraSearchTable").classList.add("hidden");message("mitraSearchMessage","Mencari driver...");
+ try{const {data,error}=await db.rpc("search_drivers",{p_partner_id:mitraId,p_keyword:keyword});
+ if(epoch!==searchEpoch||window.currentRole!=="partner_admin")return;
+ if(error)throw error;
+ for(const d of data||[]){const tr=elBDG("mitraSearchRows").insertRow();for(const v of [d.name,d.phone,d.kabupaten,d.vehicle_type,d.plate_no,d.status])tr.insertCell().textContent=v||"-";const b=document.createElement("button");b.type="button";b.className="primary";b.textContent="Pilih";b.onclick=()=>{if(visitSaving||!mitraApproved)return;clearVisit();selectedVisitDriver=d.driver_id;elBDG("visitDriverName").textContent=d.name+" ("+(d.phone||"-")+")";elBDG("mitraVisitForm").classList.remove("hidden");elBDG("mitraVisitForm").scrollIntoView();};tr.insertCell().append(b);}
+ elBDG("mitraSearchTable").classList.toggle("hidden",!data?.length);message("mitraSearchMessage",data?.length?data.length+" hasil (maksimal 20).":"Driver tidak ditemukan.");
+ }catch(e){if(epoch===searchEpoch)message("mitraSearchMessage",e.message,"error");}finally{if(epoch===searchEpoch)button.disabled=false;}
+};
+elBDG("visitCancel").onclick=()=>{if(!visitSaving)clearVisit();};
+elBDG("mitraVisitForm").onsubmit=async e=>{
+ e.preventDefault();if(visitSaving||window.currentRole!=="partner_admin"||!mitraApproved||!mitraId||!selectedVisitDriver)return;
+ const count=Number(elBDG("visitGuestCount").value),amount=Number(elBDG("visitAmount").value);
+ const origin=elBDG("visitOrigin").value.trim(),accommodation=elBDG("visitAccommodation").value.trim();
+ if(!Number.isInteger(count)||count<1||!Number.isSafeInteger(amount)||amount<0||!origin||!accommodation||!elBDG("visitAmount").value){message("visitMessage","Lengkapi data kunjungan dengan benar.","error");return;}
+ if(!confirm("Simpan kunjungan dan komisi "+formatRupiah(amount)+"?"))return;
+ visitSaving=true;elBDG("visitSave").disabled=true;const epoch=searchEpoch;
+ try{const {error}=await db.rpc("record_visit_and_commission",{p_partner_id:mitraId,p_driver_id:selectedVisitDriver,p_guest_count:count,p_guest_origin:origin,p_accommodation:accommodation,p_commission_amount:amount,p_notes:elBDG("visitNotes").value.trim()||null});
+ if(error)throw error;
+ if(epoch===searchEpoch&&window.currentRole==="partner_admin"){clearVisit();message("visitMessage","Kunjungan dan komisi berhasil disimpan. Status: Menunggu persetujuan.","success");}
+ }catch(e){if(epoch===searchEpoch)message("visitMessage","Gagal menyimpan: "+e.message+". Periksa riwayat sebelum mencoba ulang.","error");}finally{visitSaving=false;elBDG("visitSave").disabled=false;}
+};
+const commissionPanels=["driverCommission","mitraCommission","ownerCommission"];
+let commissionEpoch=0;
+async function loadCommissionPanel(id){
+ const role=window.currentRole,epoch=++commissionEpoch,box=elBDG(id+"List"),msg=elBDG(id+"Msg");
+ box.replaceChildren();msg.textContent="Memuat...";
+ try{
+ const {data,error}=await db.rpc("list_commission_management");if(error)throw error;
+ if(epoch!==commissionEpoch||role!==window.currentRole)return;
+ msg.textContent=data.length?"":"Belum ada komisi.";
+ for(const c of data){
+ const card=document.createElement("div");card.className="card";box.append(card);
+ const line=t=>{const p=document.createElement("p");p.textContent=t;card.append(p);};
+ const action=(label,fn)=>{const b=document.createElement("button");b.type="button";b.className="secondary";b.textContent=label;card.append(b);b.onclick=async()=>{if(b.disabled||role!==window.currentRole)return;b.disabled=true;try{await fn();await loadCommissionPanel(id);}catch(e){msg.textContent=e.message||"Gagal";}finally{b.disabled=false;}};};
+ const rpc=async(name,args)=>{const {error}=await db.rpc(name,args);if(error)throw error;};
+ const corrections=c.corrections||[];
+ const delta=corrections.filter(r=>r.status==="approved").reduce((sum,r)=>sum+Number(r.new_amount)-Number(r.old_amount),0);
+ line(c.partner+" — "+c.driver+" | "+formatRupiah(c.amount)+" | "+c.status);
+ if(c.status==="paid")line("Pembayaran asli: "+formatRupiah(c.amount)+"; koreksi Paid disetujui dicatat terpisah di bawah.");
+ for(const r of corrections){
+ line("Koreksi "+formatRupiah(r.old_amount)+" → "+formatRupiah(r.new_amount)+" | "+r.status+" | "+r.reason);
+ if(role==="driver"&&r.status==="pending"){
+ action("Setujui koreksi",async()=>{if(confirm("Setujui perubahan ini?"))await rpc("decide_commission_correction",{p_id:r.id,p_accept:true});});
+ action("Tolak koreksi",async()=>{if(confirm("Tolak perubahan ini?"))await rpc("decide_commission_correction",{p_id:r.id,p_accept:false});});
+ }}
+ if(role==="partner_admin"){
+ if(c.status==="paid"&&!c.linked){line("Driver belum memiliki akun terhubung. Hubungi Driver agar mendaftar, memverifikasi data dan login untuk otorisasi.");action("Salin pesan pendaftaran",async()=>{await navigator.clipboard.writeText("Mohon daftar dan login untuk memeriksa koreksi komisi di https://tewesemara.github.io/bali-driver-guide/");});}
+ if(!corrections.some(r=>r.status==="pending"))action("Koreksi komisi",async()=>{const a=prompt("Nominal yang benar (Rp)",String(c.amount));if(a===null)return;const n=Number(a);if(!a.trim()||!Number.isSafeInteger(n)||n<0)throw Error("Nominal tidak valid");const reason=prompt("Alasan koreksi");if(!reason||!reason.trim())return;await rpc("request_commission_correction",{p_id:c.id,p_amount:n,p_reason:reason});});
+ if(c.status==="pending")action("Setujui komisi",async()=>{if(confirm("Setujui komisi?"))await rpc("approve_commission",{p_commission_id:c.id});});
+ if(c.status==="approved")action("Catat pembayaran",async()=>{const proof=prompt("URL bukti pembayaran (opsional)");if(proof===null)return;if(confirm("Pastikan pembayaran benar-benar telah dilakukan."))await rpc("pay_commission",{p_commission_id:c.id,p_payment_proof_url:proof||null});});
+ }
+ }
+ }catch(e){if(epoch===commissionEpoch)msg.textContent="Gagal memuat: "+e.message;}
+}
+for(const id of commissionPanels)elBDG(id+"Reload").onclick=()=>loadCommissionPanel(id);
 startApp();
 
 </script>
