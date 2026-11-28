@@ -1,0 +1,117 @@
+\set ON_ERROR_STOP on
+-- Run as postgres in an isolated database with the current schema and migration.
+begin;
+
+create function pg_temp.check_result(ok boolean, label text) returns void language plpgsql as $$
+begin
+  if ok is distinct from true then raise exception 'FAILED: %', label; end if;
+end;
+$$;
+create function pg_temp.denied(statement text, expected text) returns void language plpgsql as $$
+begin
+  execute statement;
+  raise exception 'UNEXPECTED SUCCESS: %', statement;
+exception when others then
+  if position(expected in sqlerrm) = 0 then raise; end if;
+end;
+$$;
+grant execute on function pg_temp.check_result(boolean,text), pg_temp.denied(text,text) to authenticated, anon;
+
+insert into auth.users(id,email,raw_user_meta_data) values
+ ('00000000-0000-0000-0000-000000000001','owner@example.test','{"full_name":"Owner","whatsapp":"081234500001"}'),
+ ('00000000-0000-0000-0000-000000000002','staff@example.test','{"full_name":"Admin Owner","whatsapp":"081234500002"}'),
+ ('00000000-0000-0000-0000-000000000003','partner1@example.test','{"full_name":"Admin Mitra A","whatsapp":"081234500003"}'),
+ ('00000000-0000-0000-0000-000000000004','partner2@example.test','{"full_name":"Admin Mitra B","whatsapp":"081234500004"}'),
+ ('00000000-0000-0000-0000-000000000005','driver@example.test','{"full_name":"Driver","whatsapp":"+62 812-3450-0005"}');
+insert into auth.users(id,email,raw_user_meta_data,email_confirmed_at)
+values ('00000000-0000-0000-0000-000000000006','other@example.test','{"full_name":"Other","whatsapp":"081234500006"}',now());
+select pg_temp.check_result(exists(select 1 from public.drivers where user_id='00000000-0000-0000-0000-000000000006'), 'already-confirmed signup');
+update public.profiles set role = case right(id::text, 1)
+  when '1' then 'owner' when '2' then 'admin_owner' else 'partner_admin' end
+where right(id::text, 1) in ('1','2','3','4');
+insert into public.partners(id,name,status) values
+ ('10000000-0000-0000-0000-000000000001','Mitra A','approved'),
+ ('10000000-0000-0000-0000-000000000002','Mitra B','approved');
+insert into public.partner_users(partner_id,user_id,role) values
+ ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000003','partner_admin'),
+ ('10000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000004','partner_admin');
+insert into public.drivers(id,name,phone,address) values
+ ('20000000-0000-0000-0000-000000000005','Driver Impor','081234500005','Alamat lama');
+update auth.users set email_confirmed_at = now() where id='00000000-0000-0000-0000-000000000005';
+select pg_temp.check_result((select status='pending' from public.driver_claims), 'existing data requires a claim');
+select id as claim_id from public.driver_claims \gset
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select pg_temp.check_result((select claimant_email = 'driver@example.test' from public.list_driver_claim_review()), 'staff claim details');
+select pg_temp.check_result((select inserted=1 and skipped=1 from public.import_drivers(
+  '[{"name":"Duplikat","phone":"+6281234500005"},{"name":"Baru","phone":"081234500007"}]','skip')), 'import skip');
+select pg_temp.check_result((select updated=1 from public.import_drivers(
+  '[{"name":"Driver Baru","phone":"6281234500005"}]','update')), 'import update');
+select pg_temp.check_result((select address='Alamat lama' and user_id is null from public.drivers
+  where id='20000000-0000-0000-0000-000000000005'), 'import preserves omitted fields and account link');
+select pg_temp.denied($query$select public.import_drivers(
+  '[{"name":"Rolled back","phone":"081234500008"},{"name":"","phone":"081234500009"}]','skip')$query$,
+  'Nama dan WhatsApp wajib diisi');
+select pg_temp.check_result(not exists(select 1 from public.drivers where phone='6281234500008'), 'batch rollback');
+select pg_temp.denied($query$select public.owner_assign_admin_owner('00000000-0000-0000-0000-000000000006')$query$, 'Owner');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
+select pg_temp.check_result((select count(*)=1 from public.partners), 'partner profile RLS');
+select pg_temp.check_result((select count(*)=0 from public.list_driver_claim_review()), 'claim review private');
+select pg_temp.denied(format('select public.approve_driver_claim(%L)', :'claim_id'), 'izin');
+select pg_temp.denied($query$select public.import_drivers('[{"name":"Other","phone":"081234500008"}]','update')$query$, 'Akses ditolak');
+select pg_temp.denied($query$select public.search_drivers('10000000-0000-0000-0000-000000000002','Driver')$query$, 'bukan Admin');
+select pg_temp.check_result((select count(*)=1 from public.search_drivers('10000000-0000-0000-0000-000000000001','Driver Baru')), 'scoped search');
+select pg_temp.denied($query$select public.update_partner_profile('10000000-0000-0000-0000-000000000002','Wrong',null,null,null,null,null)$query$, 'izin');
+select pg_temp.denied($query$select * from public.activity_report(2026,'month','10000000-0000-0000-0000-000000000002')$query$, 'Akses ditolak');
+select pg_temp.denied($query$select * from public.activity_report(2026,'month')$query$, 'Akses ditolak');
+select * from public.record_visit_and_commission('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000005',3,'Asal','Hotel',100000,null) \gset
+select public.request_commission_correction(:'commission_id',110000,'Koreksi sebelum pembayaran');
+select public.approve_commission(:'commission_id');
+select public.pay_commission(:'commission_id',null);
+select public.request_commission_correction(:'commission_id',120000,'Koreksi lunas pertama') as correction_id \gset
+select pg_temp.check_result((public.list_commission_management()->0->>'linked')::boolean is false, 'unlinked recipient notification data');
+select pg_temp.denied(format('select public.request_commission_correction(%L,130000,%L)', :'commission_id','Tumpang tindih'), 'menunggu');
+select pg_temp.denied(format('select public.decide_commission_correction(%L,true)', :'correction_id'), 'Akses ditolak');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',true);
+select pg_temp.check_result((select count(*)=0 from public.visits), 'cross-partner visit RLS');
+select pg_temp.check_result((select count(*)=0 from public.commission_records), 'cross-partner commission RLS');
+select pg_temp.check_result(jsonb_array_length(public.list_commission_management())=0, 'cross-partner commission RPC');
+select pg_temp.denied(format('select public.request_commission_correction(%L,130000,%L)', :'commission_id','Mitra lain'), 'Akses ditolak');
+select pg_temp.denied($query$select public.record_visit_and_commission('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000005',3,'Asal','Hotel',100000,null)$query$, 'tidak memiliki akses');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select public.approve_driver_claim(:'claim_id');
+select pg_temp.check_result((select status='approved' from public.list_driver_claim_review()), 'staff approval');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000006',true);
+select pg_temp.denied(format('select public.decide_commission_correction(%L,true)', :'correction_id'), 'Akses ditolak');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000005',true);
+select pg_temp.check_result((select status='approved' from public.driver_claims), 'driver sees own claim');
+select pg_temp.check_result(jsonb_array_length(public.list_commission_management())=1, 'linked recipient sees commission');
+select public.decide_commission_correction(:'correction_id',true);
+select pg_temp.denied(format('select public.decide_commission_correction(%L,true)', :'correction_id'), 'Pengajuan tidak tersedia');
+select pg_temp.denied($query$select * from public.activity_report(2026,'month')$query$, 'Akses ditolak');
+
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
+select public.request_commission_correction(:'commission_id',110000,'Kembali ke nominal awal') as second_id \gset
+select pg_temp.check_result((public.list_commission_management()->0->'corrections'->2->>'old_amount')::numeric=120000
+  or exists(select 1 from jsonb_array_elements(public.list_commission_management()->0->'corrections') r
+    where r->>'id'=:'second_id' and (r->>'old_amount')::numeric=120000), 'successive correction uses effective amount');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000005',true);
+select public.decide_commission_correction(:'second_id',false);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
+select pg_temp.check_result((select visits=1 and guests=3 and commission=120000 and paid=110000
+  from public.activity_report(extract(year from now() at time zone 'Asia/Makassar')::integer,'month','10000000-0000-0000-0000-000000000001')), 'monthly totals preserve payment amount');
+select pg_temp.check_result((select count(*)=1 from public.activity_report(extract(year from now() at time zone 'Asia/Makassar')::integer,'day','10000000-0000-0000-0000-000000000001')), 'daily report');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select pg_temp.check_result((select count(*)=1 from public.activity_report(extract(year from now() at time zone 'Asia/Makassar')::integer,'year')), 'owner yearly report');
+select pg_temp.check_result((select amount=110000 and status='paid' from public.commission_records), 'payment remains intact');
+
+set local role anon;
+select set_config('request.jwt.claim.sub','',true);
+select pg_temp.denied($query$select * from public.activity_report(2026,'month')$query$, 'permission denied');
+select pg_temp.denied($query$select * from public.list_driver_claim_review()$query$, 'permission denied');
+select pg_temp.denied($query$select * from public.import_drivers('[]','skip')$query$, 'permission denied');
+rollback;
