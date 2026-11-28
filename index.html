@@ -1169,15 +1169,15 @@ async function signup() {
     document.getElementById("signupName").value = "";
     document.getElementById("signupWhatsApp").value = "";
 
-    showLoginForm();
+       showLoginForm();
 
     message(
-  "loginMessage",
-  data.session
-    ? "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat."
-    : "Pendaftaran berhasil. Silakan buka email untuk mengonfirmasi akun sebelum login.",
-  "success"
-);
+      "loginMessage",
+      data.session
+        ? "Silakan login menggunakan akun Anda."
+        : "Jika email Anda belum terdaftar, silakan periksa email untuk melakukan konfirmasi akun. Jika sudah memiliki akun, silakan Login atau gunakan fitur Lupa Password.",
+      "success"
+    );
 
   } catch (error) {
     message(
