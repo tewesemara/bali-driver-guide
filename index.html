@@ -358,26 +358,31 @@ th { background: #f3f6f5; }
       </button>
     </div>
 
-    <label>Email</label>
-    <input id="email" type="email" placeholder="Masukkan email">
+    
+<label>Email</label>
+<input id="email" type="email" placeholder="Masukkan email">
 
-    <label>Password</label>
-    <div style="display:flex;gap:8px">
-      <input id="password" type="password"
-        placeholder="Masukkan password" style="flex:1">
-      <button type="button" id="togglePassword">👁</button>
-    </div>
-
-   
+<label>Password</label>
+<div style="display:flex;gap:8px">
+  <input id="password" type="password"
+    placeholder="Masukkan password" style="flex:1">
+  <button type="button" id="togglePassword">👁</button>
+</div>
 
 <div id="signupFields" class="hidden">
+
+  <label>Ulangi Password</label>
+  <input id="confirmPassword" type="password"
+    placeholder="Ulangi password">
+
   <label>Nama Lengkap</label>
   <input id="signupName" type="text"
     placeholder="Masukkan nama lengkap">
 
-  <label>Konfirmasi Password</label>
-  <input id="confirmPassword" type="password"
-    placeholder="Ulangi password">
+  <label>Nomor WhatsApp</label>
+  <input id="signupWhatsApp" type="tel"
+    placeholder="Contoh: 081234567890">
+
 </div>
 
     <div class="actions" style="margin-top:15px">
@@ -909,6 +914,7 @@ function togglePasswordVisibility() {
 }
 
 
+
 /* PENDAFTARAN DRIVER */
 
 async function signup() {
@@ -916,12 +922,13 @@ async function signup() {
   const password = document.getElementById("password").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
   const fullName = document.getElementById("signupName").value.trim();
+  const whatsapp = document.getElementById("signupWhatsApp").value.trim();
   const button = document.getElementById("signupButton");
 
-  if (!email || !password || !confirmPassword || !fullName) {
+  if (!email || !password || !confirmPassword || !fullName || !whatsapp) {
     message(
       "loginMessage",
-      "Nama, email, password, dan konfirmasi password wajib diisi.",
+      "Nama, email, password, konfirmasi password, dan nomor WhatsApp wajib diisi.",
       "error"
     );
     return;
@@ -952,7 +959,8 @@ async function signup() {
       password,
       options: {
         data: {
-          full_name: fullName
+          full_name: fullName,
+          whatsapp: whatsapp
         }
       }
     });
@@ -977,6 +985,7 @@ async function signup() {
     document.getElementById("password").value = "";
     document.getElementById("confirmPassword").value = "";
     document.getElementById("signupName").value = "";
+    document.getElementById("signupWhatsApp").value = "";
 
     showLoginForm();
 
@@ -1001,6 +1010,7 @@ async function signup() {
     button.disabled = false;
   }
 }
+
 
 /* LUPA PASSWORD */
 
