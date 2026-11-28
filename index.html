@@ -981,6 +981,7 @@ td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
 
 </div>
 
+<div id="partnerDashboard" class="hidden" style="max-width:1100px;margin:24px auto;padding:0 16px"><div class="card topbar"><div><h3>Bali Driver &amp; Guide</h3><p>Dashboard Admin Mitra</p><span id="mitraAccount"></span></div><button id="mitraLogout" class="danger">Keluar</button></div><div class="card"><h2>Profil Objek Wisata</h2><p id="mitraStatus" role="status"></p><form id="mitraForm"><div class="grid"><div><label for="mitra_name">Nama objek wisata</label><input id="mitra_name" required ></div><div><label for="mitra_kabupaten">Kabupaten/Kota</label><input id="mitra_kabupaten"  ></div><div><label for="mitra_address">Alamat</label><input id="mitra_address"  ></div><div><label for="mitra_contact_name">Nama kontak</label><input id="mitra_contact_name"  ></div><div><label for="mitra_phone">WhatsApp</label><input id="mitra_phone"  ></div><div><label for="mitra_email">Email</label><input id="mitra_email"  type="email"></div></div><div class="actions"><button id="mitraSave" class="primary" type="submit" disabled>Simpan</button><button id="mitraReload" class="secondary" type="button">Muat ulang</button></div></form><p id="mitraMessage" role="status"></p></div><div class="card"><h3>Layanan Mitra</h3><p id="mitraServices">Pencarian driver, kunjungan, komisi dan laporan masih dalam pengembangan.</p></div></div>
 <script>
 "use strict";
 
@@ -1089,7 +1090,9 @@ async function login() {
 ) {
   await checkAdmin(data.user);
 
-} else if (profile.role === "driver") {
+} else if (profile.role === "partner_admin") {
+      await openMitraDashboard();
+    } else if (profile.role === "driver") {
 
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("driverDashboard").classList.remove("hidden");
@@ -1492,6 +1495,13 @@ async function logout() {
     return;
   }
 
+  document.getElementById("partnerDashboard").classList.add("hidden");
+  mitraId=null;
+  document.getElementById("mitraForm").reset();
+  document.getElementById("mitraSave").disabled=true;
+  document.getElementById("mitraAccount").textContent="";
+  document.getElementById("mitraStatus").textContent="";
+  document.getElementById("mitraMessage").textContent="";
   drivers = [];
   partnerData = [];
   elBDG("partnerRows").replaceChildren();
@@ -2052,7 +2062,9 @@ async function startApp() {
 ) {
    await checkAdmin(user);
 
-} else if (profile.role === "driver") {
+} else if (profile.role === "partner_admin") {
+      await openMitraDashboard();
+    } else if (profile.role === "driver") {
         document.getElementById("loginPage").classList.add("hidden");
         document.getElementById("dashboard").classList.add("hidden");
         document.getElementById("driverDashboard").classList.remove("hidden");
@@ -2151,6 +2163,46 @@ elBDG("assignAdminButton").onclick=async()=>{
  if(!confirm("Berikan akses Admin Owner kepada "+data.email+"?"))return;
  const result=await db.rpc("owner_assign_admin_owner",{p_user_id:data.id});if(result.error)throw result.error;input.value="";await loadAdminOwners();
  }catch(error){message("adminListMessage",error.message,"error");}finally{b.disabled=false;}
+};
+
+let mitraId=null;
+let mitraBusy=false;
+async function openMitraDashboard(){
+ window.currentRole="partner_admin";
+ for(const id of ["dashboard","driverDashboard","loginPage"])elBDG(id).classList.add("hidden");
+ elBDG("partnerDashboard").classList.remove("hidden");
+ await loadMitraProfile();
+}
+async function loadMitraProfile(){
+ if(window.currentRole!=="partner_admin"||mitraBusy)return;
+ mitraBusy=true;mitraId=null;elBDG("mitraSave").disabled=true;elBDG("mitraForm").reset();
+ try{
+ const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user)throw new Error("Sesi tidak valid");
+ const {data:members,error:memberError}=await db.from("partner_users").select("partner_id").eq("user_id",auth.user.id).eq("role","partner_admin");if(memberError)throw memberError;
+ if(window.currentRole!=="partner_admin")return;
+ elBDG("mitraAccount").textContent=auth.user.email||"";
+ if(members.length>1)throw new Error("Akun memiliki beberapa mitra. Hubungi Owner.");
+ if(!members.length){elBDG("mitraStatus").textContent="Belum terdaftar. Lengkapi formulir untuk mengajukan persetujuan.";elBDG("mitraSave").textContent="Daftarkan objek wisata";}
+ else{
+ const {data:p,error}=await db.from("partners").select("id,name,kabupaten,address,contact_name,phone,email,status").eq("id",members[0].partner_id).single();if(error)throw error;
+ if(window.currentRole!=="partner_admin")return;
+ mitraId=p.id;for(const k of partnerKeys)elBDG("mitra_"+k).value=p[k]||"";
+ elBDG("mitraStatus").textContent="Status: "+(({pending:"Menunggu persetujuan",approved:"Aktif",rejected:"Ditolak",suspended:"Nonaktif"})[p.status]||p.status);
+ elBDG("mitraSave").textContent="Simpan perubahan";
+ }
+ elBDG("mitraSave").disabled=false;message("mitraMessage","");
+ }catch(e){message("mitraMessage",e.message,"error");}finally{mitraBusy=false;}
+}
+elBDG("mitraLogout").onclick=logout;
+elBDG("mitraReload").onclick=loadMitraProfile;
+elBDG("mitraForm").onsubmit=async e=>{
+ e.preventDefault();if(window.currentRole!=="partner_admin"||mitraBusy)return;
+ mitraBusy=true;elBDG("mitraSave").disabled=true;
+ try{const args={};for(const k of partnerKeys)args["p_"+k]=elBDG("mitra_"+k).value.trim();
+ if(mitraId)args.p_partner_id=mitraId;
+ const {error}=await db.rpc(mitraId?"update_partner_profile":"register_partner",args);if(error)throw error;
+ mitraBusy=false;await loadMitraProfile();if(window.currentRole==="partner_admin")message("mitraMessage","Data berhasil disimpan.","success");
+ }catch(e){message("mitraMessage",e.message,"error");if(window.currentRole==="partner_admin")elBDG("mitraSave").disabled=false;}finally{mitraBusy=false;}
 };
 
 startApp();
