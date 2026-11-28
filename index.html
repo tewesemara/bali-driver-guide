@@ -974,8 +974,10 @@ async function signup() {
       throw new Error("Akun belum berhasil dibuat.");
     }
 
-    await db.auth.signOut();
-    signupSessionCreated = false;
+    if (data.session) {
+  await db.auth.signOut();
+  signupSessionCreated = false;
+}
 
     document.getElementById("password").value = "";
     document.getElementById("confirmPassword").value = "";
@@ -985,10 +987,12 @@ async function signup() {
     showLoginForm();
 
     message(
-      "loginMessage",
-      "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat.",
-      "success"
-    );
+  "loginMessage",
+  data.session
+    ? "Pendaftaran Driver berhasil. Silakan login menggunakan akun yang dibuat."
+    : "Pendaftaran berhasil. Silakan buka email untuk mengonfirmasi akun sebelum login.",
+  "success"
+);
 
   } catch (error) {
     message(
