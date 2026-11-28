@@ -1799,171 +1799,54 @@ function resetForm() {
 
 /* MEMBACA FILE EXCEL */
 
-async function handleExcelFile(event) {
-  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
-
-  const file = event.target.files[0];
-
-  if (!file) return;
-
-  const preview = document.getElementById("excelPreview");
-  preview.textContent = "Sedang membaca file Excel...";
-
-  try {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: "array" });
-
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-    const rows = XLSX.utils.sheet_to_json(sheet, {
-      defval: ""
-    });
-
-    if (!rows.length) {
-      preview.textContent = "File Excel tidak berisi data.";
-      return;
-    }
-
-    
-const kolom = {
-  "Nama Driver": "name",
-  "WhatsApp": "phone",
-  "Kabupaten/Kota": "kabupaten",
-  "Alamat": "address",
-  "Jenis Kendaraan": "vehicle_type",
-  "Nomor Polisi": "plate_no",
-  "Nomor SIM": "license_no"
-};
-
-
-    const hasil = rows.map(function(row) {
-      const record = {};
-
-      Object.keys(kolom).forEach(function(judul) {
-        record[kolom[judul]] = row[judul] ?? "";
-      });
-
-      record.name = String(record.name).trim();
-      record.phone = String(record.phone).trim();
-
-    
-      return record;
-    });
-
-    const kosong = hasil.filter(function(d) {
-      return !d.name || !d.phone;
-    });
-
-    if (kosong.length) {
-      preview.textContent =
-        "Ada " + kosong.length +
-        " baris tanpa Nama Driver atau WhatsApp. Periksa file Excel Anda.";
-      return;
-    }
-
-    window.excelImportData = hasil;
-
-    preview.innerHTML =
-      "<h3>Pratinjau Excel</h3>" +
-      "<p>Jumlah data: " + hasil.length + "</p>" +
-      "<p>File berhasil dibaca.</p>" +
-      "<button type='button' class='primary' onclick='confirmExcelImport()'>" +
-      "MULAI IMPORT KE DATABASE</button>";
-
-  } catch (error) {
-    console.error(error);
-
-    preview.textContent =
-      "Gagal membaca Excel. Pastikan file berformat .xlsx atau .xls.";
-  }
-
-  event.target.value = "";
+let excelBusy=false;
+const normalizeImportPhone=v=>String(v??"").replace(/\D/g,"").replace(/^0/,"62");
+async function handleExcelFile(event){
+ const file=event.target.files[0];event.target.value="";
+ if(excelBusy||!file||!["owner","admin_owner"].includes(window.currentRole))return;
+ const preview=document.getElementById("excelPreview");window.excelImportData=[];
+ preview.textContent="Sedang membaca Excel...";
+ excelBusy=true;document.getElementById("importButton").disabled=true;
+ try{
+ if(typeof XLSX==="undefined")throw Error("Pustaka Excel gagal dimuat. Muat ulang halaman dan periksa internet.");
+ if(file.size>20*1024*1024)throw Error("File terlalu besar. Pecah menjadi file maksimal 20 MB.");
+ await new Promise(r=>setTimeout(r,30));
+ const workbook=XLSX.read(await file.arrayBuffer(),{type:"array"});
+ const sheet=workbook.Sheets[workbook.SheetNames[0]];
+ const rows=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false});
+ if(!rows.length)throw Error("File tidak berisi data.");
+ const cols={"nama driver":"name","whatsapp":"phone","kabupaten/kota":"kabupaten","alamat":"address","jenis kendaraan":"vehicle_type","nomor polisi":"plate_no","nomor sim":"license_no"};
+ const result=[];let invalid=0;
+ for(const row of rows){const record={};for(const [k,v] of Object.entries(row)){const key=cols[k.trim().toLowerCase()];if(key)record[key]=String(v??"").trim();}
+ record.phone=normalizeImportPhone(record.phone);if(!record.name||!record.phone){invalid++;continue;}result.push(record);}
+ if(!result.length)throw Error("Tidak ada baris valid. Gunakan judul Nama Driver dan WhatsApp.");
+ window.excelImportData=result;
+ preview.replaceChildren();const p=document.createElement("p");p.textContent=result.length+" data siap diimpor; "+invalid+" baris tidak valid dilewati.";preview.append(p);
+ const label=document.createElement("label");label.textContent="Jika nomor WhatsApp sudah ada: ";const select=document.createElement("select");select.id="excelDuplicateMode";for(const [v,t] of [["skip","Lewati data duplikat"],["update","Perbarui data duplikat"]]){const opt=document.createElement("option");opt.value=v;opt.textContent=t;select.append(opt);}label.append(select);preview.append(label);
+ const btn=document.createElement("button");btn.type="button";btn.className="primary";btn.textContent="MULAI IMPORT KE DATABASE";btn.onclick=confirmExcelImport;preview.append(btn);
+ }catch(e){preview.textContent="Gagal membaca Excel: "+e.message;}finally{excelBusy=false;document.getElementById("importButton").disabled=false;}
 }
-
-/* PROSES IMPORT DAN PEMERIKSAAN DUPLIKAT */
-
-async function confirmExcelImport() {
-  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
-  
-  const data = window.excelImportData || [];
-
-  if (!data.length) {
-    alert("Belum ada data Excel yang siap diimpor.");
-    return;
-  }
-
-  if (!confirm("Mulai mengimpor " + data.length + " data driver?")) {
-    return;
-  }
-
-  const knownDrivers = [...drivers];
-
-  let inserted = 0;
-  let updated = 0;
-  let skipped = 0;
-
-  for (const record of data) {
-    const phone = String(record.phone || "")
-  .replace(/\D/g, "")
-  .replace(/^0/, "62");
-
-const duplicate = knownDrivers.find(function(d) {
-  return String(d.phone || "")
-    .replace(/\D/g, "")
-    .replace(/^0/, "62") === phone;
-});
-
-    if (duplicate) {
-      const pilih = confirm(
-        "Nomor WhatsApp " + record.phone +
-        " sudah terdaftar atas nama " + duplicate.name +
-        ".\n\nPilih OK untuk MEMPERBARUI data.\nPilih BATAL untuk MELEWATI data."
-      );
-
-      if (!pilih) {
-        skipped++;
-        continue;
-      }
-
-      const { error } = await db
-        .from("drivers")
-        .update(record)
-        .eq("id", duplicate.id);
-
-      if (error) {
-        alert("Gagal memperbarui " + record.name + ": " + error.message);
-        continue;
-      }
-
-      Object.assign(duplicate, record);
-      updated++;
-
-    } else {
-      const { data: saved, error } = await db
-        .from("drivers")
-        .insert(record)
-        .select()
-        .single();
-
-      if (error) {
-        alert("Gagal menyimpan " + record.name + ": " + error.message);
-        continue;
-      }
-
-      knownDrivers.push(saved);
-      inserted++;
-    }
-  }
-
-  window.excelImportData = [];
-
-  await loadDrivers();
-
-  document.getElementById("excelPreview").innerHTML =
-    "<h3>Hasil Import Excel</h3>" +
-    "<p>Data baru: " + inserted + "</p>" +
-    "<p>Data diperbarui: " + updated + "</p>" +
-    "<p>Data dilewati: " + skipped + "</p>";
+async function confirmExcelImport(){
+ if(excelBusy||!["owner","admin_owner"].includes(window.currentRole))return;
+ const data=window.excelImportData||[];if(!data.length)return;
+ const mode=document.getElementById("excelDuplicateMode").value;
+ if(!confirm("Impor "+data.length+" data?"))return;
+ const preview=document.getElementById("excelPreview"),button=document.getElementById("importButton");
+ excelBusy=true;button.disabled=true;let inserted=0,updated=0,skipped=0,failed=0,done=0;const errors=[];
+ const role=window.currentRole;
+ const progress=()=>{preview.textContent="Progres "+done+"/"+data.length+" | Baru: "+inserted+" | Diperbarui: "+updated+" | Dilewati: "+skipped+" | Gagal: "+failed;};
+ try{
+ progress();const known=new Map();
+ for(let offset=0;;offset+=500){const {data:page,error}=await db.from("drivers").select("id,phone").order("id").range(offset,offset+499);if(error)throw error;for(const d of page){const k=normalizeImportPhone(d.phone);if(k)known.set(k,d.id);}if(page.length<500)break;}
+ const pending=new Map();
+ for(const record of data){if(window.currentRole!==role)throw Error("Sesi berubah.");const k=record.phone;if(pending.has(k)){if(mode==="update")pending.set(k,record);skipped++;done++;}else pending.set(k,record);}
+ const fresh=[],updates=[];
+ for(const [k,record] of pending){if(known.has(k)){if(mode==="update")updates.push([known.get(k),record]);else{skipped++;done++;}}else fresh.push(record);}
+ const note=e=>{if(errors.length<5)errors.push(e.message||String(e));};
+ for(let i=0;i<fresh.length;i+=50){if(window.currentRole!==role)throw Error("Sesi berubah.");const batch=fresh.slice(i,i+50);const {error}=await db.from("drivers").insert(batch);if(error){failed+=batch.length;note(error);}else inserted+=batch.length;done+=batch.length;progress();await new Promise(r=>setTimeout(r,0));}
+ for(const [id,record] of updates){if(window.currentRole!==role)throw Error("Sesi berubah.");const {error}=await db.from("drivers").update(record).eq("id",id);if(error){failed++;note(error);}else updated++;done++;progress();}
+ window.excelImportData=[];await loadDrivers();await loadDashboardStats();progress();preview.textContent+=". Import selesai."+(errors.length?" Kesalahan: "+errors.join(" | "):"");
+ }catch(e){progress();preview.textContent+=". Import terhenti: "+e.message+". Periksa data sebelum mengulang.";}finally{excelBusy=false;button.disabled=false;}
 }
 
 /* HUBUNGKAN TOMBOL */
