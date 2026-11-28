@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bali Driver & Guide - Owner Dashboard</title>
+<title>Bali Driver & Guide</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -394,6 +394,81 @@ th { background: #f3f6f5; }
   width: 100%;
   margin-top: 10px;
 }
+
+/* BDG — penyegaran antarmuka */
+:root { --bdg-green:#176b50; --bdg-ink:#17362e; --bdg-line:#dce6e1; }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:#f4f7f6; color:var(--bdg-ink); }
+body > header { background:#123b35; padding:20px clamp(18px,4vw,42px); border-bottom:3px solid #4aa58a; }
+body > header h2 { font-size:clamp(20px,3vw,26px); letter-spacing:-.5px; }
+body > header p { font-size:13px; }
+.card,.stat-card,.placeholder { border:1px solid var(--bdg-line); border-radius:16px; box-shadow:0 4px 18px #17362e08; }
+.card { padding:24px; }
+h3 { font-size:18px; letter-spacing:-.3px; }
+label { color:#344d45; font-weight:600; }
+input,select,button { font-family:inherit; }
+input,select { min-height:44px; border-radius:10px; border-color:#cbdad3; color:var(--bdg-ink); }
+input:focus,select:focus { box-shadow:0 0 0 3px #176b501c; }
+button { min-height:42px; border-radius:10px; transition:background-color .15s; }
+button:focus-visible { outline:3px solid #499e85; outline-offset:3px; }
+.primary:hover:not(:disabled) { background:#11553f; }
+.secondary { background:#edf3f0; color:#234b3e; }
+.secondary:hover:not(:disabled) { background:#dcebe4; }
+.danger:hover:not(:disabled) { background:#922929; }
+.login { max-width:460px; margin:clamp(20px,6vh,70px) auto; }
+.login .card { padding:clamp(20px,5vw,34px); }
+#authTitle { font-size:26px; margin-bottom:8px; }
+.login .actions:first-of-type { display:grid; grid-template-columns:1fr 1fr; padding:5px; background:#edf3f0; border-radius:12px; }
+#showLoginButton,#showSignupButton { background:transparent; color:#426057; }
+.login:has(#signupFields.hidden) #showLoginButton,.login:has(#signupFields:not(.hidden)) #showSignupButton { background:#fff; color:#176b50; box-shadow:0 1px 5px #17362e18; }
+#forgotPasswordButton { background:transparent; color:#176b50; padding-left:0; }
+#togglePassword { background:#edf3f0; flex-shrink:0; }
+.login input { min-width:0; }
+.sidebar { background:#123b35; padding:24px 14px; }
+.nav-button { font-weight:550; border-radius:10px; }
+.nav-button.active { background:#286d59; box-shadow:inset 3px 0 #91d8bc; }
+.main-content { padding:clamp(16px,3vw,32px); }
+.page-heading h2 { font-size:clamp(23px,3vw,30px); letter-spacing:-.7px; }
+.page-heading p,.small { color:#52675f; }
+.stat-card { border-left:1px solid var(--bdg-line); border-top:3px solid #218267; padding:20px; }
+.stat-card::before { display:grid; place-items:center; width:40px; height:40px; border-radius:12px; background:#e8f4ee; margin-bottom:16px; font-size:20px; }
+.stat-card:nth-child(1)::before { content:"🚗"; }
+.stat-card:nth-child(2)::before { content:"🏢"; }
+.stat-card:nth-child(3)::before { content:"📋"; }
+.stat-card:nth-child(4)::before { content:"💰"; }
+.stat-value { font-size:clamp(21px,2.4vw,30px); font-variant-numeric:tabular-nums; }
+.grid { gap:14px 20px; }
+.table-wrap { border:1px solid var(--bdg-line); border-radius:12px; }
+th { background:#edf4f0; color:#345348; font-weight:650; }
+td,th { padding:14px 12px; }
+tbody tr:hover { background:#f5faf7; }
+tbody tr:last-child td { border-bottom:0; }
+td:last-child { white-space:nowrap; }
+td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
+#search { background:#f8faf9; }
+#driverDashboard { max-width:900px; margin:24px auto; padding:0 16px; }
+#driverDashboard .card:nth-child(2) h2 { font-size:clamp(22px,4vw,30px); overflow-wrap:anywhere; }
+#driverDashboard .card:nth-child(2) p { padding:14px 0; margin:0; border-bottom:1px solid var(--bdg-line); overflow-wrap:anywhere; }
+#driverDashboard .card:nth-child(2) p:last-child { border-bottom:0; }
+.driver-detail-modal { border-radius:20px; }
+.driver-detail-modal::backdrop { background:#102b24aa; }
+#adminEmail { overflow-wrap:anywhere; }
+.topbar > div { min-width:0; }
+@media(max-width:1050px) { .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:650px) {
+  .card { padding:16px; }
+  .sidebar { padding:12px; }
+  .nav-menu { scrollbar-width:thin; }
+  .nav-button { min-height:44px; }
+  .main-content { padding:14px; }
+  .stat-card { padding:14px; }
+  .stats-grid { gap:10px; }
+  .stat-label { font-size:11px; }
+  input,select { font-size:16px; }
+  .actions > button { flex:1 1 auto; }
+}
+@media(max-width:350px) { .stats-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce) { button { transition:none; } }
+
 </style>
 </head>
 
@@ -401,7 +476,7 @@ th { background: #f3f6f5; }
 
 <header>
   <h2>Bali Driver & Guide</h2>
-  <p>Owner Dashboard - Sistem Administrasi</p>
+  <p>Sistem Informasi Driver & Mitra Wisata</p>
 </header>
 
 
@@ -427,7 +502,7 @@ th { background: #f3f6f5; }
 <div style="display:flex;gap:8px">
   <input id="password" type="password"
     placeholder="Masukkan password" style="flex:1">
-  <button type="button" id="togglePassword">👁</button>
+  <button type="button" id="togglePassword" aria-label="Tampilkan atau sembunyikan password">👁</button>
 </div>
 
 <div id="signupFields" class="hidden">
@@ -1512,7 +1587,6 @@ function renderDrivers() {
         <td>${escapeHTML(d.vehicle_type)}</td>
         <td>${escapeHTML(d.plate_no)}</td>
         <td>
-          <td>
   <button class="primary" onclick="showDriverDetail('${d.id}')">
     Detail
   </button>
