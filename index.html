@@ -862,7 +862,7 @@ function formatRupiah(value) {
 }
 
 
-/* LOGIN OWNER DAN DRIVER */
+/* LOGIN OWNER, ADMIN OWNER DAN DRIVER */
 
 async function login() {
   const email = document.getElementById("email").value.trim();
@@ -895,10 +895,13 @@ async function login() {
       throw new Error("Data profil akun tidak ditemukan.");
     }
 
-    if (profile.role === "owner") {
-      await checkAdmin(data.user);
+    if (
+  profile.role === "owner" ||
+  profile.role === "admin_owner"
+) {
+  await checkAdmin(data.user);
 
-    } else if (profile.role === "driver") {
+} else if (profile.role === "driver") {
 
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("driverDashboard").classList.remove("hidden");
