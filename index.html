@@ -953,17 +953,18 @@ async function signup() {
 
   let signupSessionCreated = false;
 
-  try {
-    const { data, error } = await db.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          whatsapp: whatsapp
-        }
+ try {
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: "https://tewesemara.github.io/bali-driver-guide/",
+      data: {
+        full_name: fullName,
+        whatsapp: whatsapp
       }
-    });
+    }
+  });
 
     if (error) throw error;
 
