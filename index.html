@@ -764,7 +764,34 @@ th { background: #f3f6f5; }
       </div>
     </section>
 
-  </main>
+</main>
+</div>
+
+<!-- DASHBOARD DRIVER -->
+
+<div id="driverDashboard" class="hidden">
+
+  <div class="card topbar">
+    <div>
+      <h3 style="margin:0">Bali Driver & Guide</h3>
+      <div class="small">Dashboard Driver</div>
+    </div>
+
+    <button id="driverLogoutButton" class="danger">
+      KELUAR
+    </button>
+  </div>
+
+  <div class="card">
+    <h2>Selamat Datang, <span id="driverName"></span></h2>
+
+    <p>Email: <span id="driverEmail"></span></p>
+
+    <p>WhatsApp: <span id="driverWhatsApp"></span></p>
+
+    <p>Status: Driver</p>
+  </div>
+
 </div>
 
 <script>
@@ -832,7 +859,8 @@ function formatRupiah(value) {
   }).format(Number(value) || 0);
 }
 
-/* LOGIN */
+
+/* LOGIN OWNER DAN DRIVER */
 
 async function login() {
   const email = document.getElementById("email").value.trim();
@@ -855,20 +883,55 @@ async function login() {
 
     if (error) throw error;
 
-    const ok = await checkAdmin(data.user);
+    const { data: profile, error: profileError } = await db
+      .from("profiles")
+      .select("role, full_name, whatsapp")
+      .eq("id", data.user.id)
+      .single();
 
-    if (!ok) {
-      await db.auth.signOut();
+    if (profileError || !profile) {
+      throw new Error("Data profil akun tidak ditemukan.");
+    }
+
+    if (profile.role === "owner") {
+      await checkAdmin(data.user);
+
+    } else if (profile.role === "driver") {
+
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("driverDashboard").classList.remove("hidden");
+      document.getElementById("loginPage").classList.add("hidden");
+
+      window.currentRole = "driver";
+
+      document.getElementById("driverName").textContent =
+        profile.full_name || "";
+
+      document.getElementById("driverEmail").textContent =
+        data.user.email || "";
+
+      document.getElementById("driverWhatsApp").textContent =
+        profile.whatsapp || "";
+
+    } else {
+      throw new Error("Role akun tidak dikenali atau belum memiliki akses.");
     }
 
   } catch (error) {
+    await db.auth.signOut();
+
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("driverDashboard").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+
+    window.currentRole = null;
+
     message("loginMessage", "Login gagal: " + error.message, "error");
+
   } finally {
     button.disabled = false;
   }
 }
-
-  
 
 /* =====================================
    AUTENTIKASI LOGIN DAN PENDAFTARAN
@@ -1214,7 +1277,7 @@ async function loadDashboardStats() {
   }
 }
 
-/* LOGOUT */
+/* LOGOUT OWNER DAN DRIVER */
 
 async function logout() {
   const { error } = await db.auth.signOut();
@@ -1228,6 +1291,7 @@ async function logout() {
   window.currentRole = null;
 
   document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("driverDashboard").classList.add("hidden");
   document.getElementById("loginPage").classList.remove("hidden");
   document.getElementById("password").value = "";
 
@@ -1236,7 +1300,6 @@ async function logout() {
 
   message("loginMessage", "Anda sudah keluar.", "success");
 }
-
 /* MEMUAT DATA DRIVER */
 
 async function loadDrivers() {
@@ -1669,6 +1732,9 @@ document.getElementById("logoutButton")
 document.getElementById("navLogoutButton")
   .addEventListener("click", logout);
 
+  document.getElementById("driverLogoutButton")
+  .addEventListener("click", logout);
+
 document.getElementById("driverForm")
   .addEventListener("submit", saveDriver);
 
@@ -1696,24 +1762,60 @@ document.getElementById("excelFile")
 
 /* PERIKSA SESSION SAAT HALAMAN DIBUKA */
 
+
+/* PERIKSA SESSION SAAT HALAMAN DIBUKA */
+
 async function startApp() {
   try {
     const { data, error } = await db.auth.getSession();
 
     if (error) throw error;
 
-    // Jika sedang dalam proses pemulihan password,
-    // jangan jalankan pemeriksaan login Owner.
     if (window.passwordRecoveryMode) {
       showRecoveryForm();
       return;
     }
 
     if (data.session) {
-      await checkAdmin(data.session.user);
+      const user = data.session.user;
+
+      const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("role, full_name, whatsapp")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error("Data profil akun tidak ditemukan.");
+      }
+
+      if (profile.role === "owner") {
+        await checkAdmin(user);
+
+      } else if (profile.role === "driver") {
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("dashboard").classList.add("hidden");
+        document.getElementById("driverDashboard").classList.remove("hidden");
+
+        window.currentRole = "driver";
+
+        document.getElementById("driverName").textContent =
+          profile.full_name || "";
+
+        document.getElementById("driverEmail").textContent =
+          user.email || "";
+
+        document.getElementById("driverWhatsApp").textContent =
+          profile.whatsapp || "";
+
+      } else {
+        throw new Error("Role akun tidak dikenali.");
+      }
     }
 
   } catch (error) {
+    await db.auth.signOut();
+
     message(
       "loginMessage",
       "Gagal memeriksa sesi: " + error.message,
@@ -1721,9 +1823,6 @@ async function startApp() {
     );
   }
 }
-
-startApp();
-
 
 </script>
 
