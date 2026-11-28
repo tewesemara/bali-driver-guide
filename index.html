@@ -981,7 +981,7 @@ td button { min-height:36px; padding:8px 12px; margin:2px; font-size:12px; }
 
 </div>
 
-<div id="partnerDashboard" class="hidden" style="max-width:1100px;margin:24px auto;padding:0 16px"><div class="card topbar"><div><h3>Bali Driver &amp; Guide</h3><p>Dashboard Admin Mitra</p><span id="mitraAccount"></span></div><button id="mitraLogout" class="danger">Keluar</button></div><div class="card"><h2>Profil Objek Wisata</h2><p id="mitraStatus" role="status"></p><form id="mitraForm"><div class="grid"><div><label for="mitra_name">Nama objek wisata</label><input id="mitra_name" required ></div><div><label for="mitra_kabupaten">Kabupaten/Kota</label><input id="mitra_kabupaten"  ></div><div><label for="mitra_address">Alamat</label><input id="mitra_address"  ></div><div><label for="mitra_contact_name">Nama kontak</label><input id="mitra_contact_name"  ></div><div><label for="mitra_phone">WhatsApp</label><input id="mitra_phone"  ></div><div><label for="mitra_email">Email</label><input id="mitra_email"  type="email"></div></div><div class="actions"><button id="mitraSave" class="primary" type="submit" disabled>Simpan</button><button id="mitraReload" class="secondary" type="button">Muat ulang</button></div></form><p id="mitraMessage" role="status"></p></div><div class="card"><h3>Layanan Mitra</h3><p id="mitraServices">Pencarian driver, kunjungan, komisi dan laporan masih dalam pengembangan.</p></div></div>
+<div id="partnerDashboard" class="hidden" style="max-width:1100px;margin:24px auto;padding:0 16px"><div class="card topbar"><div><h3>Bali Driver &amp; Guide</h3><p>Dashboard Admin Mitra</p><span id="mitraAccount"></span></div><button id="mitraLogout" class="danger">Keluar</button></div><div class="card"><h2>Profil Objek Wisata</h2><p id="mitraStatus" role="status"></p><form id="mitraForm"><div class="grid"><div><label for="mitra_name">Nama objek wisata</label><input id="mitra_name" required ></div><div><label for="mitra_kabupaten">Kabupaten/Kota</label><input id="mitra_kabupaten"  ></div><div><label for="mitra_address">Alamat</label><input id="mitra_address"  ></div><div><label for="mitra_contact_name">Nama kontak</label><input id="mitra_contact_name"  ></div><div><label for="mitra_phone">WhatsApp</label><input id="mitra_phone"  ></div><div><label for="mitra_email">Email</label><input id="mitra_email"  type="email"></div></div><div class="actions"><button id="mitraSave" class="primary" type="submit" disabled>Simpan</button><button id="mitraReload" class="secondary" type="button">Muat ulang</button></div></form><p id="mitraMessage" role="status"></p></div><div class="card"><h3>Layanan Mitra</h3><p id="mitraServices">Pencarian driver tersedia setelah mitra disetujui.</p><form id="mitraSearchForm" class="hidden"><label for="mitraKeyword">Nama atau nomor WhatsApp driver</label><input id="mitraKeyword" required minlength="3" maxlength="100" placeholder="Minimal 3 karakter"><div class="actions"><button id="mitraSearchButton" class="primary" type="submit">Cari Driver</button></div></form><p id="mitraSearchMessage" role="status"></p><div class="table-wrap"><table id="mitraSearchTable" class="hidden"><thead><tr><th>Nama</th><th>WhatsApp</th><th>Kabupaten</th><th>Kendaraan</th><th>Plat</th><th>Status</th></tr></thead><tbody id="mitraSearchRows"></tbody></table></div><p>Kunjungan, komisi dan laporan masih dalam pengembangan.</p></div></div>
 <script>
 "use strict";
 
@@ -1497,6 +1497,7 @@ async function logout() {
 
   document.getElementById("partnerDashboard").classList.add("hidden");
   mitraId=null;
+  resetMitraSearch();
   document.getElementById("mitraForm").reset();
   document.getElementById("mitraSave").disabled=true;
   document.getElementById("mitraAccount").textContent="";
@@ -2166,6 +2167,9 @@ elBDG("assignAdminButton").onclick=async()=>{
 };
 
 let mitraId=null;
+let mitraApproved=false;
+let searchEpoch=0;
+function resetMitraSearch(){searchEpoch++;mitraApproved=false;elBDG("mitraSearchForm").classList.add("hidden");elBDG("mitraSearchTable").classList.add("hidden");elBDG("mitraSearchRows").replaceChildren();elBDG("mitraSearchForm").reset();elBDG("mitraSearchMessage").textContent="";elBDG("mitraSearchButton").disabled=false;}
 let mitraBusy=false;
 async function openMitraDashboard(){
  window.currentRole="partner_admin";
@@ -2175,7 +2179,7 @@ async function openMitraDashboard(){
 }
 async function loadMitraProfile(){
  if(window.currentRole!=="partner_admin"||mitraBusy)return;
- mitraBusy=true;mitraId=null;elBDG("mitraSave").disabled=true;elBDG("mitraForm").reset();
+ mitraBusy=true;mitraId=null;resetMitraSearch();elBDG("mitraSave").disabled=true;elBDG("mitraForm").reset();
  try{
  const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user)throw new Error("Sesi tidak valid");
  const {data:members,error:memberError}=await db.from("partner_users").select("partner_id").eq("user_id",auth.user.id).eq("role","partner_admin");if(memberError)throw memberError;
@@ -2186,7 +2190,7 @@ async function loadMitraProfile(){
  else{
  const {data:p,error}=await db.from("partners").select("id,name,kabupaten,address,contact_name,phone,email,status").eq("id",members[0].partner_id).single();if(error)throw error;
  if(window.currentRole!=="partner_admin")return;
- mitraId=p.id;for(const k of partnerKeys)elBDG("mitra_"+k).value=p[k]||"";
+ mitraId=p.id;mitraApproved=p.status==="approved";elBDG("mitraSearchForm").classList.toggle("hidden",!mitraApproved);elBDG("mitraServices").textContent=mitraApproved?"Cari driver berdasarkan nama atau WhatsApp.":"Pencarian driver tersedia setelah mitra disetujui.";for(const k of partnerKeys)elBDG("mitra_"+k).value=p[k]||"";
  elBDG("mitraStatus").textContent="Status: "+(({pending:"Menunggu persetujuan",approved:"Aktif",rejected:"Ditolak",suspended:"Nonaktif"})[p.status]||p.status);
  elBDG("mitraSave").textContent="Simpan perubahan";
  }
@@ -2205,6 +2209,18 @@ elBDG("mitraForm").onsubmit=async e=>{
  }catch(e){message("mitraMessage",e.message,"error");if(window.currentRole==="partner_admin")elBDG("mitraSave").disabled=false;}finally{mitraBusy=false;}
 };
 
+elBDG("mitraSearchForm").onsubmit=async e=>{
+ e.preventDefault();if(window.currentRole!=="partner_admin"||!mitraApproved||!mitraId)return;
+ const keyword=elBDG("mitraKeyword").value.trim();if(keyword.length<3||keyword.length>100){message("mitraSearchMessage","Masukkan 3–100 karakter.","error");return;}
+ const epoch=++searchEpoch;const button=elBDG("mitraSearchButton");button.disabled=true;
+ elBDG("mitraSearchRows").replaceChildren();elBDG("mitraSearchTable").classList.add("hidden");message("mitraSearchMessage","Mencari driver...");
+ try{const {data,error}=await db.rpc("search_drivers",{p_partner_id:mitraId,p_keyword:keyword});
+ if(epoch!==searchEpoch||window.currentRole!=="partner_admin")return;
+ if(error)throw error;
+ for(const d of data||[]){const tr=elBDG("mitraSearchRows").insertRow();for(const v of [d.name,d.phone,d.kabupaten,d.vehicle_type,d.plate_no,d.status])tr.insertCell().textContent=v||"-";}
+ elBDG("mitraSearchTable").classList.toggle("hidden",!data?.length);message("mitraSearchMessage",data?.length?data.length+" hasil (maksimal 20).":"Driver tidak ditemukan.");
+ }catch(e){if(epoch===searchEpoch)message("mitraSearchMessage",e.message,"error");}finally{if(epoch===searchEpoch)button.disabled=false;}
+};
 startApp();
 
 </script>
