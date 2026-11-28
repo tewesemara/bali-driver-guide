@@ -974,12 +974,6 @@ async function signup() {
       throw new Error("Akun belum berhasil dibuat.");
     }
 
-    if (!data.session) {
-      throw new Error(
-        "Sesi login belum tersedia. Periksa pengaturan konfirmasi email Supabase."
-      );
-    }
-
     await db.auth.signOut();
     signupSessionCreated = false;
 
