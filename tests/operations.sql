@@ -129,6 +129,39 @@ select pg_temp.check_result((select count(*)=0 from public.search_drivers('10000
 select pg_temp.denied(format($query$select public.record_visit_and_commission(
   '10000000-0000-0000-0000-000000000002',%L,3,'Asal','Hotel',100000,null)$query$, :'promoted_driver_id'), 'digunakan untuk mengelola Mitra');
 
+-- Exercise the remaining onboarding and review transitions with dedicated fixtures.
+reset role;
+insert into auth.users(id,email,raw_user_meta_data) values
+ ('00000000-0000-0000-0000-000000000007','candidate@example.test','{"full_name":"Candidate","whatsapp":"081234500011"}'),
+ ('00000000-0000-0000-0000-000000000008','newpartner@example.test','{"full_name":"Mitra Baru","whatsapp":"081234500012"}'),
+ ('00000000-0000-0000-0000-000000000009','rejected@example.test','{"full_name":"Ditolak","whatsapp":"081234500013"}');
+insert into public.drivers(name,phone) values ('Existing Driver','081234500013');
+update auth.users set email_confirmed_at=now()
+where id='00000000-0000-0000-0000-000000000009';
+select id as reject_id from public.driver_claims
+where user_id='00000000-0000-0000-0000-000000000009' \gset
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select public.owner_assign_admin_owner('00000000-0000-0000-0000-000000000007');
+select pg_temp.check_result((select role='admin_owner' from public.profiles where id='00000000-0000-0000-0000-000000000007'), 'Owner appoints Admin Owner');
+select public.assign_partner_admin('00000000-0000-0000-0000-000000000008');
+select public.staff_register_partner('Created By Staff',null,null,null,null,null) as staff_partner_id \gset
+select public.owner_change_partner_status(:'staff_partner_id','rejected');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000008',true);
+select public.register_partner('Pendaftaran Mitra') as self_partner_id \gset
+select pg_temp.check_result(public.is_partner_member(:'self_partner_id'), 'self-registration creates membership');
+select public.update_partner_profile(:'self_partner_id','Profil diperbarui',null,null,null,null,null);
+select pg_temp.check_result((select name='Profil diperbarui' from public.partners where id=:'self_partner_id'), 'own partner edit');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select public.approve_partner(:'self_partner_id');
+select public.reject_driver_claim(:'reject_id','Verifikasi identitas gagal');
+select pg_temp.check_result((select status='rejected' from public.list_driver_claim_review() where id=:'reject_id'), 'staff rejects claim');
+select pg_temp.check_result((select count(*)=1 from public.audit_logs where action='reject_driver_claim' and target_id=:'reject_id'), 'claim outcome audited');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000009',true);
+select pg_temp.check_result((select notes='Verifikasi identitas gagal' from public.driver_claims), 'Driver sees rejection reason');
+select pg_temp.check_result(public.normalize_whatsapp('+62 812-3450-0013')='6281234500013', 'canonical WhatsApp');
+select pg_temp.denied($query$select public.normalize_whatsapp('abc081234500013')$query$, 'tidak valid');
+
 set local role anon;
 select set_config('request.jwt.claim.sub','',true);
 select pg_temp.denied($query$select * from public.activity_report(2026,'month')$query$, 'permission denied');

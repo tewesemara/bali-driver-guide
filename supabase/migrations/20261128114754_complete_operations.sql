@@ -1,6 +1,10 @@
 -- Requires the current Bali Driver & Guide production schema.
 -- Apply as one transaction through the migration runner.
-create function public.list_driver_claim_review()
+create schema bdg_private;
+revoke all on schema bdg_private from public, anon, authenticated;
+grant usage on schema bdg_private to authenticated;
+
+create function bdg_private.list_driver_claim_review()
 returns table(id uuid, status text, created_at timestamptz, notes text,
               driver_name text, driver_phone text, claimant_name text,
               claimant_email text, claimant_phone text)
@@ -18,7 +22,7 @@ $$;
 
 -- The originally paid amount remains the payment record. Only an approved
 -- correction submitted after payment becomes the effective amount.
-create or replace function public.request_commission_correction(
+create function bdg_private.request_commission_correction(
   p_id uuid, p_amount numeric, p_reason text
 )
 returns uuid
@@ -70,7 +74,7 @@ begin
 end;
 $$;
 
-create or replace function public.list_commission_management()
+create function bdg_private.list_commission_management()
 returns jsonb
 language sql stable security definer
 set search_path = ''
@@ -93,7 +97,7 @@ as $$
   );
 $$;
 
-create function public.activity_report(p_year integer, p_period text, p_partner_id uuid default null)
+create function bdg_private.activity_report(p_year integer, p_period text, p_partner_id uuid default null)
 returns table(period text, visits bigint, guests bigint, commission numeric, paid numeric)
 language plpgsql stable security definer
 set search_path = ''
@@ -203,6 +207,41 @@ begin
   return next;
 end;
 $$;
+
+-- PostgREST exposes the invoker wrappers. The privileged functions live in a
+-- schema outside the Data API and check application role and data ownership.
+revoke all on function bdg_private.list_driver_claim_review(), bdg_private.activity_report(integer, text, uuid),
+  bdg_private.request_commission_correction(uuid, numeric, text), bdg_private.list_commission_management()
+  from public, anon, authenticated;
+grant execute on function bdg_private.list_driver_claim_review(), bdg_private.activity_report(integer, text, uuid),
+  bdg_private.request_commission_correction(uuid, numeric, text), bdg_private.list_commission_management()
+  to authenticated;
+
+create function public.list_driver_claim_review()
+returns table(id uuid, status text, created_at timestamptz, notes text,
+              driver_name text, driver_phone text, claimant_name text,
+              claimant_email text, claimant_phone text)
+language sql stable security invoker
+set search_path = ''
+as $$ select * from bdg_private.list_driver_claim_review(); $$;
+
+create or replace function public.request_commission_correction(p_id uuid, p_amount numeric, p_reason text)
+returns uuid
+language sql security invoker
+set search_path = ''
+as $$ select bdg_private.request_commission_correction(p_id, p_amount, p_reason); $$;
+
+create or replace function public.list_commission_management()
+returns jsonb
+language sql stable security invoker
+set search_path = ''
+as $$ select bdg_private.list_commission_management(); $$;
+
+create function public.activity_report(p_year integer, p_period text, p_partner_id uuid default null)
+returns table(period text, visits bigint, guests bigint, commission numeric, paid numeric)
+language sql stable security invoker
+set search_path = ''
+as $$ select * from bdg_private.activity_report(p_year, p_period, p_partner_id); $$;
 
 revoke all on function public.list_driver_claim_review(), public.activity_report(integer, text, uuid),
   public.import_drivers(jsonb, text) from public, anon, authenticated;

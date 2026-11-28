@@ -1,39 +1,29 @@
-# Bali Driver & Guide Management System — versi pengembangan 2
+# Bali Driver & Guide
 
-## Fitur
-- Login dengan akun tim (admin, operasional, driver, guide).
-- Admin/operasional: kelola database driver, guide, booking, kalender, komisi, laporan.
-- Driver/guide: dapat membaca booking yang ditugaskan kepadanya (setelah akun dihubungkan pada profil driver/guide).
-- Admin: dapat mengatur peran anggota melalui menu Pengguna.
-- Tautan WhatsApp langsung dari nomor kontak.
-- Kalender bulanan booking.
-- Komisi driver dan guide serta status pembayaran.
-- Link dokumen kendaraan dan masa berlaku dokumen.
-- Export CSV untuk data yang sedang dibuka.
+Aplikasi web statis untuk pengelolaan Driver, Mitra, kunjungan, dan komisi. GitHub Pages menyajikan aplikasi dari root branch `main`. Perubahan diuji di branch `development/whatsapp-validation` sebelum dirilis.
 
-## Setup
-1. Buat project di https://supabase.com (region Singapore jika tersedia).
-2. Di SQL Editor jalankan seluruh `schema.sql`.
-3. Di Project Settings > API salin Project URL dan anon/public key.
-4. Isi keduanya pada konstanta `CONFIG` di awal script `index.html`. Jangan pernah pakai service_role key di browser.
-5. Di Authentication > Users, invite/buat akun staf. Trigger otomatis membuat profil baru dengan peran default `driver`.
-6. Jadikan akun pertama sebagai admin lewat SQL Editor:
-   `update public.profiles set role='admin', full_name='Nama Admin' where email='email-admin-anda';`
-7. Login sebagai admin. Buka menu Pengguna untuk mengatur peran `admin`, `ops`, `driver`, atau `guide`.
-8. Pada menu Driver/Guide, hubungkan data orang dengan akun staf melalui kolom "Akun pengguna terkait". Driver/guide kemudian dapat login dan melihat booking yang ditugaskan.
-9. Hosting file `index.html` pada Netlify, Cloudflare Pages, atau hosting web statis. Bagikan URL yang sama ke tim.
+## Akun dan pekerjaan
 
-## Definisi peran
-- `admin`: semua akses dan pengelolaan peran.
-- `ops`: kelola driver, guide, booking dan laporan operasional.
-- `driver`: hanya baca booking yang ditugaskan ke data driver yang terhubung.
-- `guide`: hanya baca booking yang ditugaskan ke data guide yang terhubung.
+| Peran | Pekerjaan |
+| --- | --- |
+| Owner | Kelola Driver dan Mitra, tunjuk Admin Owner, tinjau klaim, serta lihat kunjungan, komisi, dan laporan lintas Mitra. Owner dapat menolak, menonaktifkan, dan mengaktifkan kembali Mitra. |
+| Admin Owner | Kelola dan impor data Driver, kelola profil dan Admin Mitra, setujui pendaftaran Mitra, tinjau klaim, serta pantau kunjungan dan komisi. |
+| Admin Mitra | Kelola profil Mitra sendiri. Setelah aktif, cari Driver, catat kunjungan beserta komisi, edit komisi, catat pembayaran, dan ajukan koreksi setelah pembayaran. Riwayat dan laporan mengikuti keanggotaan Mitra. |
+| Driver | Daftar dengan nomor WhatsApp Indonesia dan konfirmasi email. Jika nomor sudah tercatat, lihat status klaim setelah login. Akun yang tertaut dapat melihat komisi sendiri dan memutuskan koreksi pembayaran yang diterima. |
 
-## Penting sebelum go-live
-- SQL RLS membatasi akses di database, bukan hanya menyembunyikan menu UI.
-- User baru default `driver` agar pendaftaran tidak otomatis memberi hak operasional. Buat user lewat invite/admin, lalu tetapkan perannya.
-- Admin dapat mengubah role di menu Pengguna. Jangan berikan role admin kepada semua orang.
-- Driver/guide pada versi ini belum dapat mengubah status booking; perubahan status dilakukan staf operasional.
-- Link dokumen kendaraan harus berupa URL ke penyimpanan yang aksesnya dibatasi. Hindari link publik untuk KTP atau dokumen pribadi. Versi ini tidak mengunggah file langsung.
-- Untuk nomor WhatsApp, masukkan nomor internasional dengan kode negara (contoh Indonesia: 6281234567890) agar link WhatsApp tepat.
-- Kalender dan komisi mengikuti data booking yang tersimpan. Uji dengan data dummy dan akun masing-masing peran sebelum dipakai untuk operasional sungguhan.
+Untuk menautkan Admin Mitra ke profil yang sudah dibuat oleh staf, buka **Data Mitra**, pilih **Tautkan Admin**, lalu masukkan email akun khusus yang sudah terverifikasi. Staf memeriksa identitas pemohon klaim dengan menghubungi nomor pada data Driver sebelum menyetujui klaim.
+
+## Impor dan laporan
+
+- Di tab pertama Excel gunakan kolom `Nama Driver` dan `WhatsApp`. Kolom opsional adalah `Kabupaten/Kota`, `Alamat`, `Jenis Kendaraan`, `Nomor Polisi`, dan `Nomor SIM`.
+- Format WhatsApp sebagai teks agar awalan `0` dan digit tetap utuh. Format Indonesia `08…`, `62…`, dan `+62…` dinormalisasi. Impor menyediakan pratinjau, pilihan melewati atau memperbarui duplikat, dan hasil per kelompok maksimal 50 baris. Kolom yang tidak ada di file tidak menimpa data yang sudah tersimpan.
+- Laporan dikelompokkan menurut tanggal kunjungan di Asia/Makassar. Pilih harian, bulanan, atau tahunan serta tahun yang diinginkan. Kolom komisi disetujui memakai koreksi terbaru yang telah disetujui Driver. Kolom pembayaran tercatat menyimpan nominal pembayaran awal. Ekspor menghasilkan berkas `.xlsx` untuk periode yang sedang ditampilkan.
+
+## Pengujian dan rilis
+
+- Jalankan frontend lokal dengan `python -m http.server 8765 --bind 127.0.0.1`. Jalankan `python tests/browser.py` dengan Playwright, Chromium, dan curl tersedia. Untuk Chromium sistem, isi `BDG_CHROMIUM` dengan lokasi executable. Pengujian browser menyimulasikan respons Supabase.
+- Jalankan `psql -X -v ON_ERROR_STOP=1 -f tests/operations.sql` pada database uji terisolasi yang memuat skema terbaru dan dua migrasi di folder `supabase/migrations`. Skrip memakai data sintetis dan `ROLLBACK`. File `schema.sql` adalah skema historis untuk versi awal aplikasi.
+- Migrasi pengembangan bergantung pada skema proyek Supabase yang sudah berjalan dan diterapkan sesuai urutan nama file. Riwayat migrasi terkait proyek sudah memiliki versi `20261128101313`. Verifikasi riwayat yang tampil sebelum menerapkan dua versi baru.
+- Setelah persetujuan produksi, terapkan migrasi dan verifikasi fungsi database serta hak akses dengan akun uji. Setelah persetujuan merge, gabungkan branch pengembangan ke `main` dan verifikasi deployment Pages serta login dan pemulihan akun dari URL publik.
+
+[Catatan pengerjaan dan pengujian](catatan-pengembangan.md)

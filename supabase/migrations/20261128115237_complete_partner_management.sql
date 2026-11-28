@@ -1,4 +1,4 @@
-create function public.staff_link_partner_admin(p_partner_id uuid, p_email text)
+create function bdg_private.staff_link_partner_admin(p_partner_id uuid, p_email text)
 returns void
 language plpgsql security definer
 set search_path = ''
@@ -50,7 +50,7 @@ begin
 end;
 $$;
 
-create function public.owner_reactivate_partner(p_partner_id uuid)
+create function bdg_private.owner_reactivate_partner(p_partner_id uuid)
 returns void
 language plpgsql security definer
 set search_path = ''
@@ -68,15 +68,10 @@ begin
 end;
 $$;
 
-revoke all on function public.staff_link_partner_admin(uuid,text), public.owner_reactivate_partner(uuid)
-  from public, anon, authenticated;
-grant execute on function public.staff_link_partner_admin(uuid,text), public.owner_reactivate_partner(uuid)
-  to authenticated;
-
 -- An account created through public signup can have an automatically
 -- generated Driver row even when the account is intended to manage a Mitra.
 -- Keep that row and prevent new visits from being assigned to it.
-create function public.validate_visit_driver_role()
+create function bdg_private.validate_visit_driver_role()
 returns trigger
 language plpgsql security definer
 set search_path = ''
@@ -95,12 +90,12 @@ begin
 end;
 $$;
 
-revoke all on function public.validate_visit_driver_role() from public, anon, authenticated;
+revoke all on function bdg_private.validate_visit_driver_role() from public, anon, authenticated;
 create trigger validate_visit_driver_role
 before insert or update of driver_id on public.visits
-for each row execute function public.validate_visit_driver_role();
+for each row execute function bdg_private.validate_visit_driver_role();
 
-CREATE OR REPLACE FUNCTION public.search_drivers(p_partner_id uuid, p_keyword text)
+CREATE FUNCTION bdg_private.search_drivers(p_partner_id uuid, p_keyword text)
  RETURNS TABLE(driver_id uuid, name text, phone text, kabupaten text, vehicle_type text, plate_no text, status text)
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -211,3 +206,32 @@ BEGIN
 END;
 $function$
 ;
+
+
+revoke all on function bdg_private.staff_link_partner_admin(uuid,text), bdg_private.owner_reactivate_partner(uuid),
+  bdg_private.search_drivers(uuid,text) from public, anon, authenticated;
+grant execute on function bdg_private.staff_link_partner_admin(uuid,text), bdg_private.owner_reactivate_partner(uuid),
+  bdg_private.search_drivers(uuid,text) to authenticated;
+
+create function public.staff_link_partner_admin(p_partner_id uuid, p_email text)
+returns void
+language sql security invoker
+set search_path = ''
+as $$ select bdg_private.staff_link_partner_admin(p_partner_id, p_email); $$;
+
+create function public.owner_reactivate_partner(p_partner_id uuid)
+returns void
+language sql security invoker
+set search_path = ''
+as $$ select bdg_private.owner_reactivate_partner(p_partner_id); $$;
+
+create or replace function public.search_drivers(p_partner_id uuid, p_keyword text)
+returns table(driver_id uuid, name text, phone text, kabupaten text, vehicle_type text, plate_no text, status text)
+language sql security invoker
+set search_path = ''
+as $$ select * from bdg_private.search_drivers(p_partner_id, p_keyword); $$;
+
+revoke all on function public.staff_link_partner_admin(uuid,text), public.owner_reactivate_partner(uuid)
+  from public, anon, authenticated;
+grant execute on function public.staff_link_partner_admin(uuid,text), public.owner_reactivate_partner(uuid)
+  to authenticated;
