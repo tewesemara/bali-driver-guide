@@ -333,6 +333,67 @@ th { background: #f3f6f5; }
     padding: 14px;
   }
 }
+  /* DESAIN POP-UP DETAIL DRIVER */
+
+.driver-detail-modal {
+  width: 500px;
+  max-width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 25px;
+  border: none;
+  border-radius: 14px;
+  background: white;
+  color: #263832;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.driver-detail-modal::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #123b35;
+}
+
+.detail-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #123b35;
+}
+
+.detail-content {
+  margin: 15px 0;
+}
+
+.detail-content p {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 0;
+  margin: 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-content strong {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.detail-content span {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.driver-detail-modal > button {
+  width: 100%;
+  margin-top: 10px;
+}
 </style>
 </head>
 
@@ -768,6 +829,62 @@ th { background: #f3f6f5; }
 
 </main>
 </div>
+
+<!-- POP-UP DETAIL DRIVER -->
+
+<dialog id="driverDetailModal" class="driver-detail-modal">
+
+  <div class="detail-header">
+    <h2>Detail Data Driver</h2>
+
+    <button type="button" class="secondary"
+      onclick="closeDriverDetail()">
+      ✕
+    </button>
+  </div>
+
+  <div class="detail-content">
+
+    <p><strong>Nama Driver</strong>
+      <span id="detailName"></span>
+    </p>
+
+    <p><strong>Nomor WhatsApp</strong>
+      <span id="detailPhone"></span>
+    </p>
+
+    <p><strong>Kabupaten / Kota</strong>
+      <span id="detailKabupaten"></span>
+    </p>
+
+    <p><strong>Alamat</strong>
+      <span id="detailAddress"></span>
+    </p>
+
+    <p><strong>Jenis Kendaraan</strong>
+      <span id="detailVehicle"></span>
+    </p>
+
+    <p><strong>Nomor Polisi</strong>
+      <span id="detailPlate"></span>
+    </p>
+
+    <p><strong>Nomor SIM</strong>
+      <span id="detailLicense"></span>
+    </p>
+
+    <p><strong>Status Driver</strong>
+      <span id="detailStatus"></span>
+    </p>
+
+  </div>
+
+  <button type="button" class="primary"
+    onclick="closeDriverDetail()">
+    TUTUP
+  </button>
+
+</dialog>
 
 <!-- DASHBOARD DRIVER -->
 
@@ -1316,6 +1433,7 @@ async function logout() {
 
   message("loginMessage", "Anda sudah keluar.", "success");
 }
+  
 /* MEMUAT DATA DRIVER */
 
 async function loadDrivers() {
@@ -1325,7 +1443,7 @@ async function loadDrivers() {
 
   const { data, error } = await db
     .from("drivers")
- .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,created_at")
+ .select("id,name,phone,kabupaten,address,vehicle_type,plate_no,license_no,status,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -1394,9 +1512,14 @@ function renderDrivers() {
         <td>${escapeHTML(d.vehicle_type)}</td>
         <td>${escapeHTML(d.plate_no)}</td>
         <td>
-          <button class="secondary" onclick="editDriver('${d.id}')">
-            Edit
-          </button>
+          <td>
+  <button class="primary" onclick="showDriverDetail('${d.id}')">
+    Detail
+  </button>
+
+  <button class="secondary" onclick="editDriver('${d.id}')">
+    Edit
+  </button>
           ${window.currentRole === "owner" ? `
   <button class="danger" onclick="deleteDriver('${d.id}')">
     Hapus
@@ -1478,6 +1601,45 @@ async function saveDriver(event) {
   }
 }
 
+  /* MENAMPILKAN DETAIL DRIVER */
+
+function showDriverDetail(id) {
+  if (!["owner", "admin_owner"].includes(window.currentRole)) return;
+
+  const d = drivers.find(function(item) {
+    return String(item.id) === String(id);
+  });
+
+  if (!d) {
+    alert("Data Driver tidak ditemukan.");
+    return;
+  }
+
+  const fields = {
+    detailName: d.name,
+    detailPhone: d.phone,
+    detailKabupaten: d.kabupaten,
+    detailAddress: d.address,
+    detailVehicle: d.vehicle_type,
+    detailPlate: d.plate_no,
+    detailLicense: d.license_no,
+    detailStatus: d.status
+  };
+
+  Object.entries(fields).forEach(function(entry) {
+    document.getElementById(entry[0]).textContent =
+      entry[1] || "-";
+  });
+
+  document.getElementById("driverDetailModal").showModal();
+}
+
+/* MENUTUP DETAIL DRIVER */
+
+function closeDriverDetail() {
+  document.getElementById("driverDetailModal").close();
+}
+  
 /* EDIT DRIVER */
 
 function editDriver(id) {
