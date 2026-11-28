@@ -149,12 +149,13 @@ function createClaimPanel(id, staff) {
 
 function createVisitPanel(id, partner) {
   return operationPanel(id, "Riwayat kunjungan", async () => {
-    if (partner && !mitraId) return operationNode("p", "Riwayat tersedia setelah Mitra terdaftar.");
+    const partnerId = partner ? mitraId : null;
+    if (partner && !partnerId) return operationNode("p", "Riwayat tersedia setelah Mitra terdaftar.");
     const visits = await operationPages(() => {
       let query = db.from("visits")
         .select("id,visit_date,driver_id,guest_count,guest_origin,accommodation,notes,partners(name)" + (partner ? "" : ",drivers(name)"))
         .order("visit_date", { ascending: false }).order("id");
-      if (partner) query = query.eq("partner_id", mitraId);
+      if (partner) query = query.eq("partner_id", partnerId);
       return query;
     });
     if (!visits.length) return operationNode("p", "Belum ada kunjungan.");
@@ -196,7 +197,18 @@ function createReportPanel(id, partner) {
     const columns = ["Periode", "Kunjungan", "Tamu", "Komisi disetujui (Rp)", "Pembayaran tercatat (Rp)"];
     const rows = data.map(row => [row.period, Number(row.visits), Number(row.guests),
       Number(row.commission), Number(row.paid)]);
-    const max = Math.max(1, ...rows.map(row => row[1]));
+    const maxVisits = Math.max(1, ...rows.map(row => row[1]));
+    const maxCommission = Math.max(1, ...rows.map(row => row[3]));
+    function visualValue(label, value, max, text) {
+      const cell = operationNode("div", text);
+      const bar = operationNode("progress");
+      bar.className = "report-bar";
+      bar.max = max;
+      bar.value = value;
+      bar.setAttribute("aria-label", label);
+      cell.append(bar);
+      return cell;
+    }
     const section = operationNode("div");
     const exportButton = operationButton("Ekspor Excel", () => {
       if (!current()) return;
@@ -210,16 +222,11 @@ function createReportPanel(id, partner) {
       XLSX.utils.book_append_sheet(workbook, sheet, "Aktivitas");
       XLSX.writeFile(workbook, "laporan-" + periods[period.value].toLowerCase() + "-" + year.value + ".xlsx");
     });
-    section.append(exportButton, operationTable(columns, rows.map(([date, visits, guests, commission, paid]) => {
-      const count = operationNode("div", visits);
-      const bar = operationNode("progress");
-      bar.className = "report-bar";
-      bar.max = max;
-      bar.value = visits;
-      bar.setAttribute("aria-label", "Jumlah kunjungan " + date);
-      count.append(bar);
-      return [date, count, guests, formatRupiah(commission), formatRupiah(paid)];
-    })));
+    section.append(exportButton, operationTable(columns, rows.map(([date, visits, guests, commission, paid]) => [
+      date, visualValue("Kunjungan " + date, visits, maxVisits, visits), guests,
+      visualValue("Komisi disetujui " + date, commission, maxCommission, formatRupiah(commission)),
+      formatRupiah(paid)
+    ])));
     return section;
   });
   const periodLabel = operationNode("label", "Periode");

@@ -76,7 +76,8 @@ language sql stable security definer
 set search_path = ''
 as $$
   select coalesce(jsonb_agg(jsonb_build_object(
-    'id', c.id, 'visit_id', c.visit_id, 'driver', d.name, 'linked', d.user_id is not null,
+    'id', c.id, 'visit_id', c.visit_id, 'driver', d.name,
+    'phone', case when public.current_role() = 'partner_admin' then d.phone else null end, 'linked', d.user_id is not null,
     'partner', p.name, 'amount', c.amount, 'status', c.status, 'paid_at', c.paid_at,
     'corrections', coalesce((select jsonb_agg(to_jsonb(r) order by r.requested_at, r.id)
                              from public.commission_corrections r where r.commission_id = c.id), '[]'::jsonb)

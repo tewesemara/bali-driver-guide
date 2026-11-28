@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bali Driver & Guide</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 
 <style>
 * { box-sizing: border-box; }
@@ -2019,17 +2019,27 @@ function renderPartners(){
  const cell=tr.insertCell();
  const btn=(label,fn,cls="secondary")=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=label;b.onclick=fn;cell.append(b);};
  btn("Detail / Edit",()=>{elBDG("partnerEditId").value=p.id;for(const k of partnerKeys)elBDG("partner_"+k).value=p[k]||"";elBDG("partnerForm").scrollIntoView();});
+ if(p.status!=="rejected")btn("Tautkan Admin",()=>linkPartnerAdmin(p));
  if(p.status==="pending")btn("Setujui",()=>partnerAction("approve_partner",{p_partner_id:p.id}),"primary");
  if(window.currentRole==="owner"){
+ if(p.status==="suspended")btn("Aktifkan kembali",()=>partnerAction("owner_reactivate_partner",{p_partner_id:p.id}));
  if(p.status==="approved")btn("Nonaktifkan",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"suspended"}));
  if(p.status==="pending")btn("Tolak",()=>partnerAction("owner_change_partner_status",{p_partner_id:p.id,p_new_status:"rejected"}));
  }
  }
  message("partnerListMessage",rows.length?rows.length+" mitra":"Belum ada mitra yang cocok.");
 }
+async function linkPartnerAdmin(partner) {
+  if (!staffBDG()) return;
+  const email = prompt("Email akun terverifikasi untuk Admin Mitra " + partner.name)?.trim();
+  if (!email || !confirm("Berikan akses Admin Mitra " + partner.name + " kepada " + email + "?")) return;
+  const { error } = await db.rpc("staff_link_partner_admin", { p_partner_id: partner.id, p_email: email });
+  message("partnerListMessage", error ? error.message : "Akun Admin Mitra berhasil ditautkan.", error ? "error" : "success");
+}
+
 async function partnerAction(fn,args){
  if(!staffBDG()||!confirm("Lanjutkan perubahan status mitra?"))return;
- const {error}=await db.rpc(fn,args);message("partnerMessage",error?error.message:"Status diperbarui",error?"error":"success");if(!error){await loadPartners();await loadDashboardStats();}
+ const {error}=await db.rpc(fn,args);if(!error){await loadPartners();await loadDashboardStats();}message("partnerListMessage",error?error.message:"Status Mitra diperbarui",error?"error":"success");
 }
 elBDG("partnerForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!staffBDG())return;
@@ -2162,9 +2172,9 @@ async function loadCommissionPanel(id){
  }}
  if(role==="partner_admin"){
  if(c.status==="paid"&&!c.linked&&corrections.some(r=>r.status==="pending")){line("Driver belum memiliki akun terhubung. Minta Driver mendaftar, konfirmasi email, lalu login untuk melihat status klaim. Setelah klaim disetujui, Driver dapat memutuskan koreksi ini.");action("Salin pesan pendaftaran",async()=>{await navigator.clipboard.writeText("Mohon daftar dengan nomor WhatsApp Anda, konfirmasi email, lalu login untuk melihat status klaim dan koreksi komisi di https://tewesemara.github.io/bali-driver-guide/");});}
- if(c.status!=="cancelled"&&!corrections.some(r=>r.status==="pending"))action("Koreksi komisi",async()=>{const a=prompt("Nominal yang benar (Rp)",String(effectiveAmount));if(a===null)return;const n=Number(a);if(!a.trim()||!Number.isSafeInteger(n)||n<0)throw Error("Nominal tidak valid");const reason=prompt("Alasan koreksi");if(!reason||!reason.trim())return;await rpc("request_commission_correction",{p_id:c.id,p_amount:n,p_reason:reason});});
- if(c.status==="pending")action("Setujui komisi",async()=>{if(confirm("Setujui komisi?"))await rpc("approve_commission",{p_commission_id:c.id});});
- if(c.status==="approved")action("Catat pembayaran",async()=>{const proof=prompt("URL bukti pembayaran (opsional)");if(proof===null)return;if(confirm("Pastikan pembayaran benar-benar telah dilakukan."))await rpc("pay_commission",{p_commission_id:c.id,p_payment_proof_url:proof||null});});
+ if(mitraApproved&&c.status!=="cancelled"&&!corrections.some(r=>r.status==="pending"))action("Koreksi komisi",async()=>{const a=prompt("Nominal yang benar (Rp)",String(effectiveAmount));if(a===null)return;const n=Number(a);if(!a.trim()||!Number.isSafeInteger(n)||n<0)throw Error("Nominal tidak valid");const reason=prompt("Alasan koreksi");if(!reason||!reason.trim())return;await rpc("request_commission_correction",{p_id:c.id,p_amount:n,p_reason:reason});});
+ if(mitraApproved&&c.status==="pending")action("Setujui komisi",async()=>{if(confirm("Setujui komisi?"))await rpc("approve_commission",{p_commission_id:c.id});});
+ if(mitraApproved&&c.status==="approved")action("Catat pembayaran",async()=>{const proof=prompt("URL bukti pembayaran (opsional)");if(proof===null)return;if(confirm("Pastikan pembayaran benar-benar telah dilakukan."))await rpc("pay_commission",{p_commission_id:c.id,p_payment_proof_url:proof||null});});
  }
  }
  }catch(e){if(epoch===commissionEpoch)msg.textContent="Gagal memuat: "+e.message;}

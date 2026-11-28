@@ -96,8 +96,7 @@ select pg_temp.denied($query$select * from public.activity_report(2026,'month')$
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
 select public.request_commission_correction(:'commission_id',110000,'Kembali ke nominal awal') as second_id \gset
-select pg_temp.check_result((public.list_commission_management()->0->'corrections'->2->>'old_amount')::numeric=120000
-  or exists(select 1 from jsonb_array_elements(public.list_commission_management()->0->'corrections') r
+select pg_temp.check_result(exists(select 1 from jsonb_array_elements(public.list_commission_management()->0->'corrections') r
     where r->>'id'=:'second_id' and (r->>'old_amount')::numeric=120000), 'successive correction uses effective amount');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000005',true);
 select public.decide_commission_correction(:'second_id',false);
@@ -108,6 +107,27 @@ select pg_temp.check_result((select count(*)=1 from public.activity_report(extra
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
 select pg_temp.check_result((select count(*)=1 from public.activity_report(extract(year from now() at time zone 'Asia/Makassar')::integer,'year')), 'owner yearly report');
 select pg_temp.check_result((select amount=110000 and status='paid' from public.commission_records), 'payment remains intact');
+
+-- Partner administration uses verified, dedicated accounts and preserves Owner access.
+select pg_temp.denied($query$select public.staff_link_partner_admin('10000000-0000-0000-0000-000000000002','owner@example.test')$query$, 'belum terdaftar');
+select pg_temp.denied($query$select public.staff_link_partner_admin('10000000-0000-0000-0000-000000000002','driver@example.test')$query$, 'aktivitas atau klaim Driver');
+select public.owner_change_partner_status('10000000-0000-0000-0000-000000000002','suspended');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select pg_temp.denied($query$select public.owner_reactivate_partner('10000000-0000-0000-0000-000000000002')$query$, 'Hanya Owner');
+select public.staff_link_partner_admin('10000000-0000-0000-0000-000000000002','other@example.test');
+select public.staff_link_partner_admin('10000000-0000-0000-0000-000000000002','other@example.test');
+select pg_temp.denied($query$select public.staff_link_partner_admin('10000000-0000-0000-0000-000000000001','other@example.test')$query$, 'Mitra lain');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select public.owner_reactivate_partner('10000000-0000-0000-0000-000000000002');
+select pg_temp.check_result((select role='owner' from public.profiles where id=auth.uid()), 'Owner role preserved');
+select pg_temp.check_result((select count(*)=1 from public.audit_logs where action='link_partner_admin'), 'idempotent membership and audit');
+select id as promoted_driver_id from public.drivers where user_id='00000000-0000-0000-0000-000000000006' \gset
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000006',true);
+select pg_temp.check_result(public.current_role()='partner_admin' and
+  public.is_partner_admin('10000000-0000-0000-0000-000000000002'), 'verified account membership');
+select pg_temp.check_result((select count(*)=0 from public.search_drivers('10000000-0000-0000-0000-000000000002','Other')), 'Partner role hidden from Driver search');
+select pg_temp.denied(format($query$select public.record_visit_and_commission(
+  '10000000-0000-0000-0000-000000000002',%L,3,'Asal','Hotel',100000,null)$query$, :'promoted_driver_id'), 'digunakan untuk mengelola Mitra');
 
 set local role anon;
 select set_config('request.jwt.claim.sub','',true);
